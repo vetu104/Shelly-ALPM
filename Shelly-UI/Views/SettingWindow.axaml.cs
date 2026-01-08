@@ -5,9 +5,9 @@ using Shelly_UI.ViewModels;
 
 namespace Shelly_UI.Views;
 
-public partial class MainWindow :  ReactiveWindow<MainWindowViewModel>
+public partial class SettingWindow : ReactiveUserControl<SettingViewModel>
 {
-    public MainWindow()
+    public SettingWindow()
     {
         this.WhenActivated(disposables => { });
         AvaloniaXamlLoader.Load(this);

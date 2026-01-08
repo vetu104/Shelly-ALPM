@@ -4,14 +4,17 @@
              xmlns:local="using:Shelly_UI"
              xmlns:icons="using:Material.Icons.Avalonia"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
-    <Application.DataTemplates>
-        <local:ViewLocator/>
-    </Application.DataTemplates>
-  
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
     <Application.Styles>
-        <FluentTheme />
+       
+            <FluentTheme>
+                <!-- <FluentTheme.Palettes>
+                    <ColorPaletteResources x:Key="Light" Accent="#ff33ab96" AltHigh="White" AltLow="White" AltMedium="White" AltMediumHigh="White" AltMediumLow="White" BaseHigh="Black" BaseLow="#ff009688" BaseMedium="#ff006155" BaseMediumHigh="#ff003e33" BaseMediumLow="#ff005044" ChromeAltLow="#ff003e33" ChromeBlackHigh="Black" ChromeBlackLow="#ff009688" ChromeBlackMedium="#ff003e33" ChromeBlackMediumLow="#ff006155" ChromeDisabledHigh="#ff009688" ChromeDisabledLow="#ff006155" ChromeGray="#ff005044" ChromeHigh="#ff009688" ChromeLow="#ff8fdbd5" ChromeMedium="#ff72cdc6" ChromeMediumLow="#ff8fdbd5" ChromeWhite="White" ListLow="#ff72cdc6" ListMedium="#ff009688" RegionColor="#ff00695f" />
+                    <ColorPaletteResources x:Key="Dark" Accent="#ff33ab96" AltHigh="Black" AltLow="Black" AltMedium="Black" AltMediumHigh="Black" AltMediumLow="Black" BaseHigh="White" BaseLow="#ff009688" BaseMedium="#ff72cdc6" BaseMediumHigh="#ff8fdbd5" BaseMediumLow="#ff39b2a7" ChromeAltLow="#ff8fdbd5" ChromeBlackHigh="Black" ChromeBlackLow="#ff8fdbd5" ChromeBlackMedium="Black" ChromeBlackMediumLow="Black" ChromeDisabledHigh="#ff009688" ChromeDisabledLow="#ff72cdc6" ChromeGray="#ff56bfb6" ChromeHigh="#ff56bfb6" ChromeLow="#ff005044" ChromeMedium="#ff006155" ChromeMediumLow="#ff008477" ChromeWhite="White" ListLow="#ff006155" ListMedium="#ff009688" RegionColor="#ff00695f" />
+                </FluentTheme.Palettes>-->
+            </FluentTheme>
+
+     
         <icons:MaterialIconStyles />
     </Application.Styles>
 </Application>

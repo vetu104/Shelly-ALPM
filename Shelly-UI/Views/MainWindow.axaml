@@ -4,10 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:icons="using:Material.Icons.Avalonia"
+        xmlns:avalonia="http://reactiveui.net"
+        xmlns:shellyUi="clr-namespace:Shelly_UI"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Shelly_UI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/shellylogo.png"
         Title="Shelly"
         Width="800"
         Height="600">
@@ -15,7 +17,7 @@
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
+        <vm:MainWindowViewModel />
     </Design.DataContext>
 
     <SplitView IsPaneOpen="{Binding IsPaneOpen}"
@@ -27,15 +29,18 @@
                 <Button Command="{Binding TogglePane}"
                         HorizontalAlignment="Left"
                         Background="Transparent"
-                        Padding="10">
+                        Padding="10"
+                        Margin="5, 0 ,0,0">
                     <icons:MaterialIcon Kind="Menu" Width="24" Height="24" />
                 </Button>
                 <ListBox ItemsSource="{Binding MenuItems}"
                          Background="Transparent"
-                         BorderThickness="0">
+                         BorderThickness="0"
+                         IsHitTestVisible="True"
+                         SelectedItem="{Binding SelectedMenuItem}">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:MenuItemViewModel">
-                            <StackPanel Orientation="Horizontal" Spacing="15" Margin="5">
+                            <StackPanel Orientation="Horizontal" Spacing="15" Margin="5"  IsHitTestVisible="False">
                                 <icons:MaterialIcon Kind="{Binding Icon}" Width="24" Height="24" />
                                 <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
                             </StackPanel>
@@ -45,9 +50,16 @@
             </StackPanel>
         </SplitView.Pane>
 
-        <Grid Margin="20">
-            <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Grid>
+        <avalonia:RoutedViewHost Grid.Row="0" Router="{Binding Router}" PageTransition="{x:Null}">
+            <avalonia:RoutedViewHost.DefaultContent>
+                <TextBlock Text="Default content"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </avalonia:RoutedViewHost.DefaultContent>
+            <avalonia:RoutedViewHost.ViewLocator>
+                <shellyUi:ViewLocator />
+            </avalonia:RoutedViewHost.ViewLocator>
+        </avalonia:RoutedViewHost>
     </SplitView>
-    
+
 </Window>
