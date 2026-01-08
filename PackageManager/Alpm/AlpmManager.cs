@@ -429,37 +429,42 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         if (_handle == IntPtr.Zero) Initialize();
         var syncDbsPtr = GetSyncDbs(_handle);
         Update(_handle, syncDbsPtr, true);
-        var localDbPtr = GetLocalDb(_handle);
-        var isCompleted = true;
         try
         {
-            if (TransInit(_handle, flags) == 0)
+            if (TransInit(_handle, flags) != 0)
             {
-                Console.WriteLine($"Failed to initialize transaction: {GetErrorMessage(ErrorNumber(_handle))}");
-                isCompleted = false;
+                throw new Exception($"Failed to initialize transaction: {GetErrorMessage(ErrorNumber(_handle))}");
             }
 
-            SyncSysupgrade(_handle, false);
+            if (SyncSysupgrade(_handle, false) != 0)
+            {
+                throw new Exception($"Failed to mark system upgrade: {GetErrorMessage(ErrorNumber(_handle))}");
+            }
+
+            // Check if there are any packages to add or remove before preparing/committing
+            if (TransGetAdd(_handle) == IntPtr.Zero && TransGetRemove(_handle) == IntPtr.Zero)
+            {
+                return true; // Nothing to do, considered successful
+            }
+
             if (TransPrepare(_handle, out var dataPtr) != 0)
             {
-                Console.WriteLine(
-                    $"Failed to prepare system upgrade transaction transaction: {GetErrorMessage(ErrorNumber(_handle))}");
-                isCompleted = false;
+                throw new Exception(
+                    $"Failed to prepare system upgrade transaction: {GetErrorMessage(ErrorNumber(_handle))}");
             }
 
             if (TransCommit(_handle, out dataPtr) != 0)
             {
-                Console.WriteLine(
+                throw new Exception(
                     $"Failed to commit system upgrade transaction: {GetErrorMessage(ErrorNumber(_handle))}");
-                isCompleted = false;
             }
+
+            return true;
         }
         finally
         {
             _ = TransRelease(_handle);
         }
-
-        return isCompleted;
     }
 
     public void Dispose()
