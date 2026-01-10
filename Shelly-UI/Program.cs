@@ -1,6 +1,9 @@
 ﻿using Avalonia;
 using ReactiveUI.Avalonia;
 using System;
+using System.Diagnostics;
+using PackageManager.User;
+using Velopack;
 
 namespace Shelly_UI;
 
@@ -12,6 +15,8 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        VelopackApp.Build().Run();
+
         if (!OperatingSystem.IsLinux())
         {
             Console.WriteLine("Shelly-UI is exclusively for Arch Linux.");

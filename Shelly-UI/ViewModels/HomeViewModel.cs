@@ -1,3 +1,4 @@
+using System.Reactive.Concurrency;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -6,8 +7,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Eto.Drawing;
-using PackageManager.Alpm;
 using ReactiveUI;
 using Shelly_UI.Models;
 
@@ -18,8 +17,25 @@ public class HomeViewModel : ViewModelBase, IRoutableViewModel
     public HomeViewModel(IScreen screen)
     {
         HostScreen = screen;
-        InstalledPackages = new ObservableCollection<AlpmPackage>(new AlpmManager().GetInstalledPackages());
+        LoadData();
         LoadFeed();
+    }
+
+    private async void LoadData()
+    {
+        try
+        {
+            var packages = await Task.Run(() => AlpmService.Instance.GetInstalledPackages());
+            RxApp.MainThreadScheduler.Schedule(() =>
+            {
+                InstalledPackages = new ObservableCollection<AlpmPackageDto>(packages);
+                this.RaisePropertyChanged(nameof(InstalledPackages));
+            });
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to load installed packages: {e.Message}");
+        }
     }
 
     // Reference to IScreen that owns the routable view model.
@@ -27,7 +43,7 @@ public class HomeViewModel : ViewModelBase, IRoutableViewModel
 
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
 
-    public ObservableCollection<AlpmPackage> InstalledPackages { get; set; }
+    public ObservableCollection<AlpmPackageDto> InstalledPackages { get; set; }
     
     public ObservableCollection<RssModel> FeedItems { get; } = new ObservableCollection<RssModel>();
     
@@ -55,21 +71,23 @@ public class HomeViewModel : ViewModelBase, IRoutableViewModel
         {
             var feed = await GetRssFeedAsync("https://archlinux.org/feeds/news/");
             var cachedFeed = new CachedRssModel();
-            foreach (var item in feed)
+            RxApp.MainThreadScheduler.Schedule(() =>
             {
-                FeedItems.Add(item);
-                cachedFeed.Rss.Add(item);
-            }
+                foreach (var item in feed)
+                {
+                    FeedItems.Add(item);
+                    cachedFeed.Rss.Add(item);
+                }
+            });
             cachedFeed.TimeCached = DateTime.Now;
             CacheFeed(cachedFeed);
-            
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
         }
     }
-    
+
     public async Task<ObservableCollection<RssModel>> GetRssFeedAsync(string url)
     {
         var items = new ObservableCollection<RssModel>();

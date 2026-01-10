@@ -10,7 +10,7 @@ using static PackageManager.Alpm.AlpmReference;
 
 namespace PackageManager.Alpm;
 
-public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
+public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, IAlpmManager
 {
     private string _configPath = configPath;
     private PacmanConf _config;
@@ -121,10 +121,12 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
                 if (url.EndsWith(".db") || url.EndsWith(".db.sig"))
                 {
                     localpath = Path.Combine(_config.DbPath, "sync", fileName);
+                    //Console.WriteLine($"Using {localpath} as destination for {url}");
                 }
                 else
                 {
                     localpath = Path.Combine(_config.CacheDir, fileName);
+                    //Console.WriteLine($"Using {localpath} as destination for {url}");
                 }
             }
 
@@ -226,8 +228,17 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         }
         catch (Exception ex)
         {
-            var url = Marshal.PtrToStringUTF8(urlPtr);
-            Console.WriteLine($"Download logic failed for {url}: {ex.Message}");
+            string urlString;
+            try
+            {
+                urlString = Marshal.PtrToStringUTF8(urlPtr) ?? "unknown url";
+            }
+            catch
+            {
+                urlString = "invalid pointer";
+            }
+
+            //Console.WriteLine($"Download logic failed for {urlString}: {ex.Message}");
             return -1;
         }
     }
@@ -236,11 +247,25 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
     {
         try
         {
+            //Console.WriteLine($"Downloading {fullUrl} to {localpath}");
             using var response = _httpClient.GetAsync(fullUrl).GetAwaiter().GetResult();
-            if (!response.IsSuccessStatusCode) return -1;
+            if (!response.IsSuccessStatusCode)
+            {
+                //Console.WriteLine($"Failed to download {fullUrl}: {response.StatusCode}");
+                return -1;
+            }
 
-            using var fs = new FileStream(localpath, FileMode.Create, FileAccess.Write, FileShare.None);
-            response.Content.ReadAsStream().CopyTo(fs);
+            try
+            {
+                using var fs = new FileStream(localpath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+                response.Content.ReadAsStream().CopyTo(fs);
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine($"Failed to write to {localpath}: {ex.Message}");
+                return -1;
+            }
+
             return 0;
         }
         catch
@@ -260,18 +285,18 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         }
     }
 
-    public List<AlpmPackage> GetInstalledPackages()
+    public List<AlpmPackageDto> GetInstalledPackages()
     {
         if (_handle == IntPtr.Zero) Initialize();
         var dbPtr = GetLocalDb(_handle);
         var pkgPtr = DbGetPkgCache(dbPtr);
-        return AlpmPackage.FromList(pkgPtr);
+        return AlpmPackage.FromList(pkgPtr).Select(p => p.ToDto()).ToList();
     }
 
-    public List<AlpmPackage> GetAvailablePackages()
+    public List<AlpmPackageDto> GetAvailablePackages()
     {
         if (_handle == IntPtr.Zero) Initialize();
-        var packages = new List<AlpmPackage>();
+        var packages = new List<AlpmPackageDto>();
         var syncDbsPtr = GetSyncDbs(_handle);
 
         var currentPtr = syncDbsPtr;
@@ -281,7 +306,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
             if (node.Data != IntPtr.Zero)
             {
                 var dbPkgCachePtr = DbGetPkgCache(node.Data);
-                packages.AddRange(AlpmPackage.FromList(dbPkgCachePtr));
+                packages.AddRange(AlpmPackage.FromList(dbPkgCachePtr).Select(p => p.ToDto()));
             }
 
             currentPtr = node.Next;
@@ -290,24 +315,26 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         return packages;
     }
 
-    public List<AlpmPackageUpdate> GetPackagesNeedingUpdate()
+    public List<AlpmPackageUpdateDto> GetPackagesNeedingUpdate()
     {
         if (_handle == IntPtr.Zero) Initialize();
-        var packagesNeedingUpdate = new List<AlpmPackageUpdate>();
+        var updates = new List<AlpmPackageUpdateDto>();
         var syncDbsPtr = GetSyncDbs(_handle);
-        var installedPackages = GetInstalledPackages();
+        var dbPtr = GetLocalDb(_handle);
+        var pkgPtr = DbGetPkgCache(dbPtr);
+        var installedPackages = AlpmPackage.FromList(pkgPtr);
 
         foreach (var installedPkg in installedPackages)
         {
             var newVersionPtr = SyncGetNewVersion(installedPkg.PackagePtr, syncDbsPtr);
             if (newVersionPtr != IntPtr.Zero)
             {
-                // The pointer is already an alpm_pkg_t*, no need to cast to AlpmList
-                packagesNeedingUpdate.Add(new AlpmPackageUpdate(installedPkg, new AlpmPackage(newVersionPtr)));
+                var update = new AlpmPackageUpdate(installedPkg, new AlpmPackage(newVersionPtr));
+                updates.Add(update.ToDto());
             }
         }
 
-        return packagesNeedingUpdate;
+        return updates;
     }
 
     private string GetErrorMessage(AlpmErrno error)
@@ -383,6 +410,87 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         }
     }
 
+    public void InstallPackages(List<string> packageNames,
+        AlpmTransFlag flags = AlpmTransFlag.NoScriptlet | AlpmTransFlag.NoHooks)
+    {
+        if (_handle == IntPtr.Zero) Initialize();
+
+        List<IntPtr> pkgPtrs = new List<IntPtr>();
+
+        foreach (var packageName in packageNames)
+        {
+            // Find the package in sync databases
+            IntPtr pkgPtr = IntPtr.Zero;
+            var syncDbsPtr = GetSyncDbs(_handle);
+            var currentPtr = syncDbsPtr;
+            while (currentPtr != IntPtr.Zero)
+            {
+                var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
+                if (node.Data != IntPtr.Zero)
+                {
+                    pkgPtr = DbGetPkg(node.Data, packageName);
+                    if (pkgPtr != IntPtr.Zero) break;
+                }
+
+                currentPtr = node.Next;
+            }
+
+            if (pkgPtr == IntPtr.Zero)
+            {
+                throw new Exception($"Package '{packageName}' not found in any sync database.");
+            }
+
+            pkgPtrs.Add(pkgPtr);
+        }
+
+        if (pkgPtrs.Count == 0) return;
+
+        // If we are doing a DbOnly install, we should also skip dependency checks, 
+        // extraction, and signature/checksum validation to avoid requirement for the physical package file.
+        if (flags.HasFlag(AlpmTransFlag.DbOnly))
+        {
+            flags |= AlpmTransFlag.NoDeps | AlpmTransFlag.NoExtract | AlpmTransFlag.NoPkgSig |
+                     AlpmTransFlag.NoCheckSpace;
+        }
+
+        // Initialize transaction
+        if (TransInit(_handle, flags) != 0)
+        {
+            throw new Exception($"Failed to initialize transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+        }
+
+        try
+        {
+            foreach (var pkgPtr in pkgPtrs)
+            {
+                if (AddPkg(_handle, pkgPtr) != 0)
+                {
+                    // Note: In libalpm, if one fails, we might want to know which one, 
+                    // but here we just throw an exception for the first failure.
+                    throw new Exception(
+                        $"Failed to add a package to transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+                }
+            }
+
+            // Prepare transaction
+            if (TransPrepare(_handle, out var dataPtr) != 0)
+            {
+                throw new Exception($"Failed to prepare transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+            }
+
+            // Commit transaction
+            if (TransCommit(_handle, out dataPtr) != 0)
+            {
+                throw new Exception($"Failed to commit transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+            }
+        }
+        finally
+        {
+            // Release transaction
+            TransRelease(_handle);
+        }
+    }
+
     public void RemovePackage(string packageName,
         AlpmTransFlag flags = AlpmTransFlag.NoScriptlet | AlpmTransFlag.NoHooks)
     {
@@ -432,7 +540,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         }
     }
 
-    public bool UpdatePackages(List<string> packageNames,
+    public void UpdatePackages(List<string> packageNames,
         AlpmTransFlag flags = AlpmTransFlag.NoScriptlet | AlpmTransFlag.NoHooks)
     {
         List<IntPtr> pkgPtrs = [];
@@ -454,7 +562,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
             // Check if there are any packages to add or remove before preparing/committing
             if (TransGetAdd(_handle) == IntPtr.Zero && TransGetRemove(_handle) == IntPtr.Zero)
             {
-                return true; // Nothing to do, considered successful
+                return; // Nothing to do, considered successful
             }
 
             if (TransPrepare(_handle, out var dataPtr) != 0)
@@ -468,8 +576,6 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
                 throw new Exception(
                     $"Failed to commit system upgrade transaction: {GetErrorMessage(ErrorNumber(_handle))}");
             }
-
-            return true;
         }
         finally
         {
