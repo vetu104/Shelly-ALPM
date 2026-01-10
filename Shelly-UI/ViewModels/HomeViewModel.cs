@@ -7,8 +7,10 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using PackageManager.Alpm;
 using ReactiveUI;
 using Shelly_UI.Models;
+using Shelly_UI.Services;
 
 namespace Shelly_UI.ViewModels;
 

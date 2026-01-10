@@ -8,6 +8,7 @@ class Program
     static void Main(string[] args)
     {
         using var manager = new AlpmManager();
+        manager.IntializeWithSync();
 
         while (true)
         {
@@ -33,44 +34,44 @@ class Program
                 switch (request.Command)
                 {
                     case "GetAvailablePackages":
-                        manager.Initialize();
+                        //manager.Initialize();
                         var available = manager.GetAvailablePackages();
                         response.Data = JsonSerializer.Serialize(available);
                         break;
 
                     case "GetInstalledPackages":
-                        manager.Initialize();
+                        //manager.Initialize();
                         var installed = manager.GetInstalledPackages();
                         response.Data = JsonSerializer.Serialize(installed);
                         break;
 
                     case "GetPackagesNeedingUpdate":
-                        manager.IntializeWithSync();
+                        //manager.IntializeWithSync();
                         var updates = manager.GetPackagesNeedingUpdate();
                         response.Data = JsonSerializer.Serialize(updates);
                         break;
 
                     case "Sync":
-                        manager.IntializeWithSync();
+                        //manager.IntializeWithSync();
                         break;
 
                     case "InstallPackages":
                         if (request.Payload == null) throw new Exception("Missing packages list");
                         var packagesToInstall = JsonSerializer.Deserialize<List<string>>(request.Payload);
-                        manager.Initialize();
+                        //manager.Initialize();
                         manager.InstallPackages(packagesToInstall!);
                         break;
 
                     case "UpdatePackages":
                         if (request.Payload == null) throw new Exception("Missing packages list");
                         var packagesToUpdate = JsonSerializer.Deserialize<List<string>>(request.Payload);
-                        manager.Initialize();
+                        //manager.Initialize();
                         manager.UpdatePackages(packagesToUpdate!);
                         break;
 
                     case "RemovePackage":
                         if (request.Payload == null) throw new Exception("Missing package name");
-                        manager.Initialize();
+                        //manager.Initialize();
                         manager.RemovePackage(request.Payload);
                         break;
 
