@@ -1,7 +1,8 @@
 ﻿using Avalonia;
 using ReactiveUI.Avalonia;
 using System;
-
+using System.Diagnostics;
+using PackageManager.User;
 using Velopack;
 
 namespace Shelly_UI;
@@ -21,7 +22,27 @@ sealed class Program
             Console.WriteLine("Shelly-UI is exclusively for Arch Linux.");
             return;
         }
-        
+        if (!UserIdentity.IsRoot())
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "pkexec",
+                Arguments = $"env DISPLAY={Environment.GetEnvironmentVariable("DISPLAY")} " +
+                            $"XAUTHORITY={Environment.GetEnvironmentVariable("XAUTHORITY")} " +
+                            $"{Environment.ProcessPath} {string.Join(" ", args)}",
+                UseShellExecute = false
+            };
+
+            try
+            {
+                Process.Start(processInfo);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to elevate privileges: " + ex.Message);
+            }
+            return;
+        }
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }

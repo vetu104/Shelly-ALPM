@@ -121,10 +121,12 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
                 if (url.EndsWith(".db") || url.EndsWith(".db.sig"))
                 {
                     localpath = Path.Combine(_config.DbPath, "sync", fileName);
+                    Console.WriteLine($"Using {localpath} as destination for {url}");
                 }
                 else
                 {
                     localpath = Path.Combine(_config.CacheDir, fileName);
+                    Console.WriteLine($"Using {localpath} as destination for {url}");
                 }
             }
 
@@ -226,8 +228,17 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         }
         catch (Exception ex)
         {
-            var url = Marshal.PtrToStringUTF8(urlPtr);
-            Console.WriteLine($"Download logic failed for {url}: {ex.Message}");
+            string urlString;
+            try
+            {
+                urlString = Marshal.PtrToStringUTF8(urlPtr) ?? "unknown url";
+            }
+            catch
+            {
+                urlString = "invalid pointer";
+            }
+
+            Console.WriteLine($"Download logic failed for {urlString}: {ex.Message}");
             return -1;
         }
     }
@@ -236,11 +247,25 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
     {
         try
         {
+            Console.WriteLine($"Downloading {fullUrl} to {localpath}");
             using var response = _httpClient.GetAsync(fullUrl).GetAwaiter().GetResult();
-            if (!response.IsSuccessStatusCode) return -1;
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Failed to download {fullUrl}: {response.StatusCode}");
+                return -1;
+            }
 
-            using var fs = new FileStream(localpath, FileMode.Create, FileAccess.Write, FileShare.None);
-            response.Content.ReadAsStream().CopyTo(fs);
+            try
+            {
+                using var fs = new FileStream(localpath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
+                response.Content.ReadAsStream().CopyTo(fs);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to write to {localpath}: {ex.Message}");
+                return -1;
+            }
+
             return 0;
         }
         catch
@@ -379,6 +404,87 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable
         finally
         {
             // 6. Release transaction
+            TransRelease(_handle);
+        }
+    }
+
+    public void InstallPackages(List<string> packageNames,
+        AlpmTransFlag flags = AlpmTransFlag.NoScriptlet | AlpmTransFlag.NoHooks)
+    {
+        if (_handle == IntPtr.Zero) Initialize();
+
+        List<IntPtr> pkgPtrs = new List<IntPtr>();
+
+        foreach (var packageName in packageNames)
+        {
+            // Find the package in sync databases
+            IntPtr pkgPtr = IntPtr.Zero;
+            var syncDbsPtr = GetSyncDbs(_handle);
+            var currentPtr = syncDbsPtr;
+            while (currentPtr != IntPtr.Zero)
+            {
+                var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
+                if (node.Data != IntPtr.Zero)
+                {
+                    pkgPtr = DbGetPkg(node.Data, packageName);
+                    if (pkgPtr != IntPtr.Zero) break;
+                }
+
+                currentPtr = node.Next;
+            }
+
+            if (pkgPtr == IntPtr.Zero)
+            {
+                throw new Exception($"Package '{packageName}' not found in any sync database.");
+            }
+
+            pkgPtrs.Add(pkgPtr);
+        }
+
+        if (pkgPtrs.Count == 0) return;
+
+        // If we are doing a DbOnly install, we should also skip dependency checks, 
+        // extraction, and signature/checksum validation to avoid requirement for the physical package file.
+        if (flags.HasFlag(AlpmTransFlag.DbOnly))
+        {
+            flags |= AlpmTransFlag.NoDeps | AlpmTransFlag.NoExtract | AlpmTransFlag.NoPkgSig |
+                     AlpmTransFlag.NoCheckSpace;
+        }
+
+        // Initialize transaction
+        if (TransInit(_handle, flags) != 0)
+        {
+            throw new Exception($"Failed to initialize transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+        }
+
+        try
+        {
+            foreach (var pkgPtr in pkgPtrs)
+            {
+                if (AddPkg(_handle, pkgPtr) != 0)
+                {
+                    // Note: In libalpm, if one fails, we might want to know which one, 
+                    // but here we just throw an exception for the first failure.
+                    throw new Exception(
+                        $"Failed to add a package to transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+                }
+            }
+
+            // Prepare transaction
+            if (TransPrepare(_handle, out var dataPtr) != 0)
+            {
+                throw new Exception($"Failed to prepare transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+            }
+
+            // Commit transaction
+            if (TransCommit(_handle, out dataPtr) != 0)
+            {
+                throw new Exception($"Failed to commit transaction: {GetErrorMessage(ErrorNumber(_handle))}");
+            }
+        }
+        finally
+        {
+            // Release transaction
             TransRelease(_handle);
         }
     }

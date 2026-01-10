@@ -22,11 +22,11 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
     {
         HostScreen = screen;
         _alpmManager.IntializeWithSync();
-        
+
         var packages = _alpmManager.GetAvailablePackages();
-        
+
         AvaliablePackages = new ObservableCollection<InstallModel>(
-            packages.Select(u => new InstallModel 
+            packages.Select(u => new InstallModel
             {
                 Name = u.Name,
                 Version = u.Version,
@@ -34,7 +34,7 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
                 IsChecked = false
             })
         );
-        
+
         _filteredPackages = this
             .WhenAnyValue(x => x.SearchText)
             .Throttle(TimeSpan.FromMilliseconds(250))
@@ -52,12 +52,12 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
             return AvaliablePackages;
         }
 
-        return AvaliablePackages.Where(p => 
+        return AvaliablePackages.Where(p =>
             p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
-    
     }
-    
+
     private bool _showConfirmDialog;
+
     public bool ShowConfirmDialog
     {
         get => _showConfirmDialog;
@@ -71,15 +71,12 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
 
     private async Task AlpmInstall()
     {
-        var selectedPackages = AvaliablePackages.Where(x => x.IsChecked).ToList();
+        var selectedPackages = AvaliablePackages.Where(x => x.IsChecked).Select(x => x.Name).ToList();
         if (selectedPackages.Any())
         {
-            foreach (var package in selectedPackages)
-            {
-                _alpmManager.InstallPackage(package.Name);
-            }
+            _alpmManager.InstallPackages(selectedPackages);
         }
-        
+
         ToggleConfirmAction();
     }
 
@@ -94,7 +91,6 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
         get => _searchText;
         set => this.RaiseAndSetIfChanged(ref _searchText, value);
     }
-    
+
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
-    
 }
