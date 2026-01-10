@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using Shelly_UI.Services;
+using Shelly_UI.Services.AppCache;
 using Shelly_UI.ViewModels;
 using Shelly_UI.Views;
 
@@ -28,6 +29,7 @@ public partial class App : Application
         // Register all the services needed for the application to run
         var collection = new ServiceCollection();
         collection.AddSingleton<IConfigService, ConfigService>();
+        collection.AddSingleton<IAppCache, AppCache>();
         collection.AddSingleton<ThemeService>();
 
         // Creates a ServiceProvider containing services from the provided IServiceCollection
@@ -37,13 +39,14 @@ public partial class App : Application
         {
             var configService = _services.GetRequiredService<IConfigService>();
             var themeService = _services.GetRequiredService<ThemeService>();
+            var cacheService = _services.GetRequiredService<IAppCache>();
             var config = configService.LoadConfig();
             if (config.AccentColor != null) themeService.ApplyCustomAccent(config.AccentColor);
             Assets.Resources.Culture = config.Culture != null ? new CultureInfo(config.Culture) : new CultureInfo("default");
         
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(configService),
+                DataContext = new MainWindowViewModel(configService, cacheService),
             };
         }
 

@@ -8,8 +8,10 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using PackageManager.Alpm;
 using ReactiveUI;
+using Shelly_UI.Enums;
 using Shelly_UI.Models;
 using Shelly_UI.Services;
+using Shelly_UI.Services.AppCache;
 
 namespace Shelly_UI.ViewModels;
 
@@ -20,10 +22,14 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
     private string? _searchText;
     private readonly ObservableAsPropertyHelper<IEnumerable<PackageModel>> _filteredPackages;
 
-    public PackageViewModel(IScreen screen)
+    private IAppCache _appCache;
+
+    public PackageViewModel(IScreen screen, IAppCache appCache)
     {
         HostScreen = screen;
         AvaliablePackages = new ObservableCollection<PackageModel>();
+
+        _appCache = appCache;
 
         _filteredPackages = this
             .WhenAnyValue(x => x.SearchText, x => x.AvaliablePackages.Count, (s, c) => s)
@@ -33,12 +39,28 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
             .ToProperty(this, x => x.FilteredPackages);
 
         AlpmInstallCommand = ReactiveCommand.CreateFromTask(AlpmInstall);
-        
+
         LoadData();
     }
 
     private async void LoadData()
     {
+        var cachedPackages = await _appCache.GetAsync<List<PackageModel>?>(nameof(CacheEnums.PackageCache));
+
+        if (cachedPackages != null)
+        {
+            RxApp.MainThreadScheduler.Schedule(() =>
+            {
+                foreach (var model in cachedPackages)
+                {
+                    AvaliablePackages.Add(model);
+                }
+
+                this.RaisePropertyChanged(nameof(AvaliablePackages));
+            });
+            return;
+        }
+        
         try
         {
             await Task.Run(() => _alpmManager.IntializeWithSync());
@@ -49,8 +71,12 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
                 Name = u.Name,
                 Version = u.Version,
                 DownloadSize = u.Size,
+                Description = u.Description,
+                Url = u.Url,
                 IsChecked = false
             }).ToList();
+
+            await _appCache.StoreAsync(nameof(CacheEnums.PackageCache), models);
 
             RxApp.MainThreadScheduler.Schedule(() =>
             {
@@ -58,6 +84,7 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
                 {
                     AvaliablePackages.Add(model);
                 }
+
                 this.RaisePropertyChanged(nameof(AvaliablePackages));
             });
         }

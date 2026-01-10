@@ -4,17 +4,23 @@ using Shelly_UI.Assets;
 using ReactiveUI;
 using Material.Icons;
 using Shelly_UI.Services;
+using Shelly_UI.Services.AppCache;
 
 namespace Shelly_UI.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase, IScreen
 {
-   
+    
+    private PackageViewModel? _cachedPackages;
 
-    public MainWindowViewModel(IConfigService configService)
+    public MainWindowViewModel(IConfigService configService, IAppCache appCache)
     {
         GoHome = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new HomeViewModel(this)));
-        GoPackages = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new PackageViewModel(this)));
+        GoPackages = ReactiveCommand.CreateFromObservable(() =>
+        {
+            _cachedPackages ??= new PackageViewModel(this, appCache);
+            return Router.Navigate.Execute(_cachedPackages);
+        });
         GoUpdate = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new UpdateViewModel(this)));
         GoRemove = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new RemoveViewModel(this)));
         GoSetting = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new SettingViewModel(this, configService)));

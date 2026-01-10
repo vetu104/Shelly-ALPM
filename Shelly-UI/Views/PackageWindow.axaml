@@ -58,6 +58,14 @@
                                     <Separator />
                                     <MenuItem Header="{Binding Version, StringFormat='Version: {0}'}" IsEnabled="False" />
                                     <MenuItem Header="{Binding SizeString, StringFormat='Size: {0}'}" IsEnabled="False" />
+                                    <MenuItem IsEnabled="False">
+                                        <MenuItem.Header>
+                                            <TextBlock Text="{Binding Description, StringFormat='Description: {0}'}" 
+                                                       TextWrapping="Wrap" 
+                                                       MaxWidth="300" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                    <MenuItem Header="{Binding Url, StringFormat='Url'}" IsEnabled="False" />
                                 </ContextMenu>
                             </Setter.Value>
                         </Setter>

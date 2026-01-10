@@ -12,6 +12,10 @@ public class PackageModel : ReactiveObject
     
     // Helper property to format bytes to MB
     public string SizeString => $"{(DownloadSize / 1024.0 / 1024.0):F2} MB";
+    
+    public string? Description { get; set; }
+    
+    public string? Url { get; set; }
 
     private bool _isChecked;
     public bool IsChecked { 
