@@ -9,7 +9,8 @@
              xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Shelly_UI.Views.UpdateWindow"
-             x:DataType="viewModels:UpdateViewModel">
+             x:DataType="viewModels:UpdateViewModel"
+             x:CompileBindings="True">
     <UserControl.Styles>
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />

@@ -8,7 +8,8 @@
              xmlns:models="clr-namespace:Shelly_UI.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:DataType="vm:PackageViewModel"
-             x:Class="Shelly_UI.Views.PackageWindow">
+             x:Class="Shelly_UI.Views.PackageWindow"
+             x:CompileBindings="True">
     <UserControl.Styles>
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />

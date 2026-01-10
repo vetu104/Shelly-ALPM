@@ -8,7 +8,8 @@
              xmlns:viewModels="clr-namespace:Shelly_UI.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Shelly_UI.Views.RemoveWindow"
-             x:DataType="viewModels:RemoveViewModel">
+             x:DataType="viewModels:RemoveViewModel"
+             x:CompileBindings="True">
        <UserControl.Styles>
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
