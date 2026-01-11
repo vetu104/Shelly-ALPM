@@ -651,29 +651,37 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
         List<IntPtr> failedPkgPtrs = [];
         if (_handle == IntPtr.Zero) Initialize();
         var syncDbsPtr = GetSyncDbs(_handle);
+        var localDbPtr = GetLocalDb(_handle);
         Update(_handle, syncDbsPtr, true);
         try
         {
             foreach (var packageName in packageNames)
             {
+                IntPtr installedPkgPtr = DbGetPkg(localDbPtr, packageName);
+                if (installedPkgPtr == IntPtr.Zero)
+                {
+                    //Don't attempt to update something that doesn't exist.
+                    continue;
+                }
                 // Find the package in sync databases
                 IntPtr pkgPtr = IntPtr.Zero;
-                var currentPtr = syncDbsPtr;
-                while (currentPtr != IntPtr.Zero)
-                {
-                    var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
-                    if (node.Data != IntPtr.Zero)
-                    {
-                        pkgPtr = DbGetPkg(node.Data, packageName);
-                        if (pkgPtr != IntPtr.Zero) break;
-                    }
-
-                    currentPtr = node.Next;
-                }
+                pkgPtr = SyncGetNewVersion(installedPkgPtr, syncDbsPtr);
+                // var currentPtr = syncDbsPtr;
+                // while (currentPtr != IntPtr.Zero)
+                // {
+                //     var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
+                //     if (node.Data != IntPtr.Zero)
+                //     {
+                //         pkgPtr = DbGetPkg(node.Data, packageName);
+                //         if (pkgPtr != IntPtr.Zero) break;
+                //     }
+                //
+                //     currentPtr = node.Next;
+                // }
 
                 if (pkgPtr == IntPtr.Zero)
                 {
-                    throw new Exception($"Package '{packageName}' not found in any sync database.");
+                    continue;
                 }
 
                 pkgPtrs.Add(pkgPtr);
