@@ -54,7 +54,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
             _handle = IntPtr.Zero;
             throw new Exception($"Error initializing alpm library: {error}");
         }
-        
+
         if (!string.IsNullOrEmpty(_config.CacheDir))
         {
             AddCacheDir(_handle, _config.CacheDir);
@@ -71,11 +71,13 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
                 _ => "x86_64" // Fallback to a sensible default or handle other cases
             };
         }
-        
+
         if (!string.IsNullOrEmpty(resolvedArch))
         {
             AddArchitecture(_handle, resolvedArch);
+            AddArchitecture(_handle, "any");
         }
+
         // Set up the download callback
         _downloadCallback = DownloadFile;
         SetDownloadCallback(_handle, _downloadCallback, IntPtr.Zero);
@@ -92,7 +94,12 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
                     string resolvedServer = server
                         .Replace("$repo", repo.Name)
                         .Replace("$arch", resolvedArch);
+                    if (resolvedArch.Contains("_v3") || resolvedArch.Contains("_v4"))
+                    {
+                        AddArchitecture(_handle, resolvedArch);
+                    }
 
+                    Console.Error.WriteLine($"[DEBUG_LOG] Registering Server: {resolvedServer}");
                     DbAddServer(db, resolvedServer);
                 }
             }
@@ -235,7 +242,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
             }
 
             //Console.WriteLine($"Download logic failed for {urlString}: {ex.Message}");
-            Console.Error.WriteLine($"[DEBUG_LOG] Download logic failed for {urlString}: {ex.Message}");
+            //Console.Error.WriteLine($"[DEBUG_LOG] Download logic failed for {urlString}: {ex.Message}");
             return -1;
         }
     }
@@ -661,6 +668,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
                     //Don't attempt to update something that doesn't exist.
                     continue;
                 }
+
                 // Find the package in sync databases
                 IntPtr pkgPtr = IntPtr.Zero;
                 pkgPtr = SyncGetNewVersion(installedPkgPtr, syncDbsPtr);
