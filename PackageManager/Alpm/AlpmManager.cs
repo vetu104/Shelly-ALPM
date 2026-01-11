@@ -619,8 +619,30 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
         Update(_handle, syncDbsPtr, true);
         try
         {
-            pkgPtrs.AddRange(packageNames.Select(packageName => DbGetPkg(GetLocalDb(_handle), packageName))
-                .Where(pkgPtr => pkgPtr != IntPtr.Zero));
+            foreach (var packageName in packageNames)
+            {
+                // Find the package in sync databases
+                IntPtr pkgPtr = IntPtr.Zero;
+                var currentPtr = syncDbsPtr;
+                while (currentPtr != IntPtr.Zero)
+                {
+                    var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
+                    if (node.Data != IntPtr.Zero)
+                    {
+                        pkgPtr = DbGetPkg(node.Data, packageName);
+                        if (pkgPtr != IntPtr.Zero) break;
+                    }
+
+                    currentPtr = node.Next;
+                }
+
+                if (pkgPtr == IntPtr.Zero)
+                {
+                    throw new Exception($"Package '{packageName}' not found in any sync database.");
+                }
+
+                pkgPtrs.Add(pkgPtr);
+            }
             if (TransInit(_handle, flags) != 0)
             {
                 throw new Exception($"Failed to initialize transaction: {GetErrorMessage(ErrorNumber(_handle))}");
