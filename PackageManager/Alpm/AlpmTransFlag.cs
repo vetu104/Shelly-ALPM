@@ -5,6 +5,8 @@ namespace PackageManager.Alpm;
 [Flags]
 public enum AlpmTransFlag : int
 {
+    None = 0,
+
     /// <summary>Ignore dependency checks.</summary>
     NoDeps = 1,
 

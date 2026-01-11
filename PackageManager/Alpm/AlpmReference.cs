@@ -12,11 +12,23 @@ namespace PackageManager.Alpm
         public const string LibName = "alpm";
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void AlpmEventCallback(IntPtr eventPtr);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void AlpmQuestionCallback(IntPtr questionPtr);
+        
+        [LibraryImport(LibName, EntryPoint = "alpm_option_set_eventcb")]
+        public static partial int SetEventCallback(IntPtr handle, AlpmEventCallback cb);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int AlpmDownloadCallback(IntPtr ctx, IntPtr url, IntPtr localpath, int force);
 
         [LibraryImport(LibName, EntryPoint = "alpm_option_set_dlcb")]
         public static partial int SetDownloadCallback(IntPtr handle, AlpmDownloadCallback cb, IntPtr ctx);
 
+        [LibraryImport(LibName, EntryPoint = "alpm_option_set_questioncb")]
+        public static partial int SetQuestionCallback(IntPtr handle, AlpmQuestionCallback cb);
+        
         /// <summary>
         /// Initializes the alpm library.
         /// </summary>
@@ -153,7 +165,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="glob">The file glob to add.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_add_overwrite_file", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_add_overwrite_file",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int AddOverwriteFile(IntPtr handle, string glob);
 
         /// <summary>
@@ -162,7 +175,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="glob">The file glob to remove.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_overwrite_file", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_overwrite_file",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int RemoveOverwriteFile(IntPtr handle, string glob);
 
         /// <summary>
@@ -232,7 +246,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="path">The package name or path.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_noupgrade", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_noupgrade",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int RemoveNoUpgrade(IntPtr handle, string path);
 
         /// <summary>
@@ -267,7 +282,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="path">The file path.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_noextract", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_noextract",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int RemoveNoExtract(IntPtr handle, string path);
 
         /// <summary>
@@ -302,7 +318,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="pkg">The package name.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_ignorepkg", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_ignorepkg",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int RemoveIgnorePkg(IntPtr handle, string pkg);
 
         /// <summary>
@@ -337,7 +354,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="grp">The group name.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_ignoregroup", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_ignoregroup",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int RemoveIgnoreGroup(IntPtr handle, string grp);
 
         /// <summary>
@@ -354,7 +372,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="arch">The architecture name.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_add_architecture", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_add_architecture",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int AddArchitecture(IntPtr handle, string arch);
 
         /// <summary>
@@ -372,7 +391,8 @@ namespace PackageManager.Alpm
         /// <param name="handle">The alpm handle.</param>
         /// <param name="arch">The architecture name.</param>
         /// <returns>0 on success, -1 on error.</returns>
-        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_architecture", StringMarshalling = StringMarshalling.Utf8)]
+        [LibraryImport(LibName, EntryPoint = "alpm_option_remove_architecture",
+            StringMarshalling = StringMarshalling.Utf8)]
         public static partial int RemoveArchitecture(IntPtr handle, string arch);
 
         /// <summary>
@@ -651,7 +671,8 @@ namespace PackageManager.Alpm
         /// <param name="pkg">The loaded package pointer.</param>
         /// <returns>0 on success, -1 on error.</returns>
         [LibraryImport(LibName, EntryPoint = "alpm_pkg_load", StringMarshalling = StringMarshalling.Utf8)]
-        public static partial int PkgLoad(IntPtr handle, string filename, [MarshalAs(UnmanagedType.Bool)] bool full, AlpmSigLevel level, out IntPtr pkg);
+        public static partial int PkgLoad(IntPtr handle, string filename, [MarshalAs(UnmanagedType.Bool)] bool full,
+            AlpmSigLevel level, out IntPtr pkg);
 
         /// <summary>
         /// Finds a newer version of a package in sync databases.
