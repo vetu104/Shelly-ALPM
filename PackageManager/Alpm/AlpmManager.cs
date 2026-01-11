@@ -491,30 +491,18 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
         }
     }
 
-      public void RemovePackages(List<string> packageNames,
+    public void RemovePackages(List<string> packageNames,
         AlpmTransFlag flags = AlpmTransFlag.NoScriptlet | AlpmTransFlag.NoHooks)
     {
         if (_handle == IntPtr.Zero) Initialize();
 
         List<IntPtr> pkgPtrs = new List<IntPtr>();
-
+        var localDbPtr = GetLocalDb(_handle);
         foreach (var packageName in packageNames)
         {
             // Find the package in sync databases
-            IntPtr pkgPtr = IntPtr.Zero;
-            var syncDbsPtr = GetSyncDbs(_handle);
-            var currentPtr = syncDbsPtr;
-            while (currentPtr != IntPtr.Zero)
-            {
-                var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
-                if (node.Data != IntPtr.Zero)
-                {
-                    pkgPtr = DbGetPkg(node.Data, packageName);
-                    if (pkgPtr != IntPtr.Zero) break;
-                }
 
-                currentPtr = node.Next;
-            }
+            var pkgPtr = DbGetPkg(localDbPtr, packageName);
 
             if (pkgPtr == IntPtr.Zero)
             {
@@ -571,7 +559,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
             TransRelease(_handle);
         }
     }
-      
+
     public void RemovePackage(string packageName,
         AlpmTransFlag flags = AlpmTransFlag.NoScriptlet | AlpmTransFlag.NoHooks)
     {
