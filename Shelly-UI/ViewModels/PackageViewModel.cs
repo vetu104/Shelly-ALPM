@@ -144,10 +144,13 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
         var selectedPackages = AvaliablePackages.Where(x => x.IsChecked).Select(x => x.Name).ToList();
         if (selectedPackages.Any())
         {
+            ShowConfirmDialog = false;
             await Task.Run(() => _alpmManager.InstallPackages(selectedPackages));
         }
-
-        ToggleConfirmAction();
+        else
+        {
+            ShowConfirmDialog = false;
+        }
     }
 
     public ReactiveCommand<Unit, Unit> AlpmInstallCommand { get; }

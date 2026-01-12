@@ -111,9 +111,13 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
         var selectedPackages = AvailablePackages.Where(x => x.IsChecked).Select(x => x.Name).ToList();
         if (selectedPackages.Any())
         {
+            ShowConfirmDialog = false;
             await Task.Run(() => _alpmManager.RemovePackages(selectedPackages));
         }
-        ToggleConfirmAction();
+        else
+        {
+            ShowConfirmDialog = false;
+        }
     }
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
 

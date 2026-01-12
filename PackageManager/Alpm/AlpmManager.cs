@@ -20,9 +20,10 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
     private AlpmDownloadCallback _downloadCallback;
     private AlpmEventCallback _eventCallback;
     private AlpmQuestionCallback _questionCallback;
-    private AlpmProgressCallback _progressCallback;
+    private AlpmProgressCallback? _progressCallback;
 
     public event EventHandler<AlpmProgressEventArgs>? Progress;
+    public event EventHandler<AlpmPackageOperationEventArgs>? PackageOperation;
 
     public void IntializeWithSync()
     {
@@ -937,12 +938,14 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
                     IntPtr pkgPtrStart = Marshal.ReadIntPtr(eventPtr, 8);
                     string? pkgNameStart = Marshal.PtrToStringUTF8(GetPkgName(pkgPtrStart));
                     Console.Error.WriteLine($"[ALPM] Processing package: {pkgNameStart}");
+                    PackageOperation?.Invoke(this, new AlpmPackageOperationEventArgs(type, pkgNameStart));
                     break;
 
                 case AlpmEventType.PackageOperationDone:
                     IntPtr pkgPtrDone = Marshal.ReadIntPtr(eventPtr, 8);
                     string? pkgNameDone = Marshal.PtrToStringUTF8(GetPkgName(pkgPtrDone));
                     Console.Error.WriteLine($"[ALPM] Finished processing: {pkgNameDone}");
+                    PackageOperation?.Invoke(this, new AlpmPackageOperationEventArgs(type, pkgNameDone));
                     break;
 
                 case AlpmEventType.ScriptletInfo:

@@ -23,44 +23,61 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <SplitView IsPaneOpen="{Binding IsPaneOpen}"
-               CompactPaneLength="66"
-               DisplayMode="CompactInline"
-               OpenPaneLength="200">
-        <SplitView.Pane>    
-            <StackPanel Spacing="5" Margin="5">
-                <Button Command="{Binding TogglePane}"
-                        HorizontalAlignment="Left"
-                        Background="Transparent"
-                        Padding="10"
-                        Margin="5, 0 ,0,0">
-                    <icons:MaterialIcon Kind="Menu" Width="24" Height="24" />
-                </Button>
-                <ListBox ItemsSource="{Binding MenuItems}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         IsHitTestVisible="True"
-                         SelectedItem="{Binding SelectedMenuItem}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:MenuItemViewModel">
-                            <StackPanel Orientation="Horizontal" Spacing="15" Margin="5"  IsHitTestVisible="False">
-                                <icons:MaterialIcon Kind="{Binding Icon}" Width="24" Height="24" />
-                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </StackPanel>
-        </SplitView.Pane>
-        <avalonia:RoutedViewHost Grid.Row="0" Router="{Binding Router}" PageTransition="{x:Null}">
-            <avalonia:RoutedViewHost.DefaultContent>
-                <TextBlock Text="Default content"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
-            </avalonia:RoutedViewHost.DefaultContent>
-            <avalonia:RoutedViewHost.ViewLocator>
-                <shellyUi:ViewLocator />
-            </avalonia:RoutedViewHost.ViewLocator>
-        </avalonia:RoutedViewHost>
-    </SplitView>
+    <Grid>
+        <SplitView IsPaneOpen="{Binding IsPaneOpen}"
+                   CompactPaneLength="66"
+                   DisplayMode="CompactInline"
+                   OpenPaneLength="200">
+            <SplitView.Pane>
+                <StackPanel Spacing="5" Margin="5">
+                    <Button Command="{Binding TogglePane}"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            Padding="10"
+                            Margin="5, 0 ,0,0">
+                        <icons:MaterialIcon Kind="Menu" Width="24" Height="24" />
+                    </Button>
+                    <ListBox ItemsSource="{Binding MenuItems}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             IsHitTestVisible="True"
+                             SelectedItem="{Binding SelectedMenuItem}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MenuItemViewModel">
+                                <StackPanel Orientation="Horizontal" Spacing="15" Margin="5"  IsHitTestVisible="False">
+                                    <icons:MaterialIcon Kind="{Binding Icon}" Width="24" Height="24" />
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </SplitView.Pane>
+            <avalonia:RoutedViewHost Grid.Row="0" Router="{Binding Router}" PageTransition="{x:Null}">
+                <avalonia:RoutedViewHost.DefaultContent>
+                    <TextBlock Text="Default content"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </avalonia:RoutedViewHost.DefaultContent>
+                <avalonia:RoutedViewHost.ViewLocator>
+                    <shellyUi:ViewLocator />
+                </avalonia:RoutedViewHost.ViewLocator>
+            </avalonia:RoutedViewHost>
+        </SplitView>
+        <Panel IsVisible="{Binding IsProcessing}" Background="#80000000">
+            <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    CornerRadius="10"
+                    Padding="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 4 20 0 #40000000">
+                <StackPanel Spacing="15">
+                    <ProgressBar IsIndeterminate="True" Height="4" />
+                    <TextBlock Text="{Binding ProcessingMessage}"
+                               HorizontalAlignment="Center"
+                               FontSize="16" />
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Grid>
 </Window>

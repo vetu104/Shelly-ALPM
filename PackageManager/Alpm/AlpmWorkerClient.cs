@@ -9,6 +9,7 @@ namespace PackageManager.Alpm;
 public class AlpmWorkerClient : IAlpmManager, IDisposable
 {
     public event EventHandler<AlpmProgressEventArgs>? Progress;
+    public event EventHandler<AlpmPackageOperationEventArgs>? PackageOperation;
     private readonly string _workerPath;
     private readonly Func<string?>? _passwordProvider;
     private Process? _workerProcess;
@@ -148,21 +149,67 @@ public class AlpmWorkerClient : IAlpmManager, IDisposable
         _workerInput!.WriteLine(jsonRequest);
         _workerInput.Flush();
 
-        var jsonResponse = _workerOutput!.ReadLine();
-        if (jsonResponse == null)
+        while (true)
         {
-            throw new Exception("Worker process exited unexpectedly.");
+            var jsonLine = _workerOutput!.ReadLine();
+            if (jsonLine == null)
+            {
+                throw new Exception("Worker process exited unexpectedly.");
+            }
+
+            // Try to see if it's an event or a response
+            using var doc = JsonDocument.Parse(jsonLine);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("Type", out _) && root.TryGetProperty("Payload", out _))
+            {
+                // It's an event
+                var workerEvent = JsonSerializer.Deserialize(jsonLine, AlpmWorkerJsonContext.Default.WorkerEvent);
+                if (workerEvent != null)
+                {
+                    HandleWorkerEvent(workerEvent);
+                }
+                continue;
+            }
+
+            // Otherwise assume it's a response
+            var response = JsonSerializer.Deserialize(jsonLine, AlpmWorkerJsonContext.Default.WorkerResponse)
+                           ?? throw new Exception("Failed to deserialize worker response.");
+
+            if (!response.Success)
+            {
+                throw new Exception($"Worker error: {response.Error}");
+            }
+
+            return response.Data ?? string.Empty;
         }
+    }
 
-        var response = JsonSerializer.Deserialize(jsonResponse, AlpmWorkerJsonContext.Default.WorkerResponse)
-                       ?? throw new Exception("Failed to deserialize worker response.");
-
-        if (!response.Success)
+    private void HandleWorkerEvent(WorkerEvent workerEvent)
+    {
+        switch (workerEvent.Type)
         {
-            throw new Exception($"Worker error: {response.Error}");
+            case "Progress":
+                if (workerEvent.Payload != null)
+                {
+                    var args = JsonSerializer.Deserialize(workerEvent.Payload, AlpmWorkerJsonContext.Default.AlpmProgressEventArgs);
+                    if (args != null)
+                    {
+                        Progress?.Invoke(this, args);
+                    }
+                }
+                break;
+            case "PackageOperation":
+                if (workerEvent.Payload != null)
+                {
+                    var args = JsonSerializer.Deserialize(workerEvent.Payload, AlpmWorkerJsonContext.Default.AlpmPackageOperationEventArgs);
+                    if (args != null)
+                    {
+                        PackageOperation?.Invoke(this, args);
+                    }
+                }
+                break;
         }
-
-        return response.Data ?? string.Empty;
     }
 
     public void IntializeWithSync() => RunWorker("Sync", elevated: true);

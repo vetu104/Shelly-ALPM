@@ -6,6 +6,7 @@ namespace PackageManager.Alpm;
 public interface IAlpmManager
 {
     event EventHandler<AlpmProgressEventArgs>? Progress;
+    event EventHandler<AlpmPackageOperationEventArgs>? PackageOperation;
 
     void IntializeWithSync();
     void Initialize();

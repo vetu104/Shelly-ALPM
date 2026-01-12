@@ -6,6 +6,9 @@ namespace Shelly.Worker;
 
 [JsonSerializable(typeof(WorkerRequest))]
 [JsonSerializable(typeof(WorkerResponse))]
+[JsonSerializable(typeof(WorkerEvent))]
+[JsonSerializable(typeof(AlpmProgressEventArgs))]
+[JsonSerializable(typeof(AlpmPackageOperationEventArgs))]
 [JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(List<AlpmPackageDto>))]
 [JsonSerializable(typeof(List<AlpmPackageUpdateDto>))]
@@ -18,6 +21,27 @@ class Program
     static void Main(string[] args)
     {
         using var manager = new AlpmManager();
+
+        manager.Progress += (sender, e) =>
+        {
+            var workerEvent = new WorkerEvent
+            {
+                Type = "Progress",
+                Payload = JsonSerializer.Serialize(e, WorkerJsonContext.Default.AlpmProgressEventArgs)
+            };
+            Console.WriteLine(JsonSerializer.Serialize(workerEvent, WorkerJsonContext.Default.WorkerEvent));
+        };
+
+        manager.PackageOperation += (sender, e) =>
+        {
+            var workerEvent = new WorkerEvent
+            {
+                Type = "PackageOperation",
+                Payload = JsonSerializer.Serialize(e, WorkerJsonContext.Default.AlpmPackageOperationEventArgs)
+            };
+            Console.WriteLine(JsonSerializer.Serialize(workerEvent, WorkerJsonContext.Default.WorkerEvent));
+        };
+
         manager.Initialize();
 
         while (true)

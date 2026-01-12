@@ -1,8 +1,13 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Linq;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
+using System.Collections.ObjectModel;
 using System.Reactive;
 using Shelly_UI.Assets;
 using ReactiveUI;
 using Material.Icons;
+using PackageManager.Alpm;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
 
@@ -13,8 +18,37 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     
     private PackageViewModel? _cachedPackages;
 
-    public MainWindowViewModel(IConfigService configService, IAppCache appCache)
+    public MainWindowViewModel(IConfigService configService, IAppCache appCache, IAlpmManager alpmManager, IScheduler? scheduler = null)
     {
+        scheduler ??= RxApp.MainThreadScheduler;
+
+        var packageOperationEvents = Observable.FromEventPattern<AlpmPackageOperationEventArgs>(
+            h => alpmManager.PackageOperation += h,
+            h => alpmManager.PackageOperation -= h);
+
+        packageOperationEvents.Subscribe(pattern =>
+        {
+            var args = pattern.EventArgs;
+            if (args.EventType == AlpmEventType.PackageOperationStart)
+            {
+                IsProcessing = true;
+                ProcessingMessage = $"Completing requested actions: {args.PackageName}";
+            }
+            else if (args.EventType == AlpmEventType.PackageOperationDone)
+            {
+                IsProcessing = false;
+                ProcessingMessage = string.Empty;
+            }
+        });
+
+        packageOperationEvents
+            .Throttle(TimeSpan.FromSeconds(5), scheduler)
+            .Subscribe(_ =>
+            {
+                IsProcessing = false;
+                ProcessingMessage = string.Empty;
+            });
+
         GoHome = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new HomeViewModel(this)));
         GoPackages = ReactiveCommand.CreateFromObservable(() =>
         {
@@ -46,6 +80,20 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     {
         get => _isPaneOpen;
         set => this.RaiseAndSetIfChanged(ref _isPaneOpen, value);
+    }
+
+    private bool _isProcessing;
+    public bool IsProcessing
+    {
+        get => _isProcessing;
+        set => this.RaiseAndSetIfChanged(ref _isProcessing, value);
+    }
+
+    private string _processingMessage = string.Empty;
+    public string ProcessingMessage
+    {
+        get => _processingMessage;
+        set => this.RaiseAndSetIfChanged(ref _processingMessage, value);
     }
     
     public void TogglePane()
