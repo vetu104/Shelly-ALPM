@@ -86,16 +86,28 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
 
         // Set up the download callback
         _downloadCallback = DownloadFile;
-        SetDownloadCallback(_handle, _downloadCallback, IntPtr.Zero);
+        if (SetDownloadCallback(_handle, _downloadCallback, IntPtr.Zero) != 0)
+        {
+            Console.Error.WriteLine("[ALPM_ERROR] Failed to set download callback");
+        }
 
         _eventCallback = HandleEvent;
-        SetEventCallback(_handle, _eventCallback);
+        if (SetEventCallback(_handle, _eventCallback) != 0)
+        {
+            Console.Error.WriteLine("[ALPM_ERROR] Failed to set event callback");
+        }
 
         _questionCallback = HandleQuestion;
-        SetQuestionCallback(_handle, _questionCallback);
+        if (SetQuestionCallback(_handle, _questionCallback) != 0)
+        {
+            Console.Error.WriteLine("[ALPM_ERROR] Failed to set question callback");
+        }
 
         _progressCallback = HandleProgress;
-        SetProgressCallback(_handle, _progressCallback, IntPtr.Zero);
+        if (SetProgressCallback(_handle, _progressCallback, IntPtr.Zero) != 0)
+        {
+            Console.Error.WriteLine("[ALPM_ERROR] Failed to set progress callback");
+        }
 
         foreach (var repo in _config.Repos)
         {
@@ -298,19 +310,60 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
     {
         try
         {
-            //Console.WriteLine($"Downloading {fullUrl} to {localpath}");
             Console.Error.WriteLine($"[DEBUG_LOG] Downloading {fullUrl} to {localpath}");
-            using var response = _httpClient.GetAsync(fullUrl).GetAwaiter().GetResult();
+            using var response = _httpClient.GetAsync(fullUrl, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();
             if (!response.IsSuccessStatusCode)
             {
                 Console.Error.WriteLine($"[DEBUG_LOG] Failed to download {fullUrl}: {response.StatusCode}");
                 return -1;
             }
 
+            var totalBytes = response.Content.Headers.ContentLength;
+            string fileName = Path.GetFileName(localpath);
+
             try
             {
                 using var fs = new FileStream(localpath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None);
-                response.Content.ReadAsStream().CopyTo(fs);
+                using var stream = response.Content.ReadAsStream();
+                
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                long totalRead = 0;
+                int lastPercent = -1;
+                
+                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    fs.Write(buffer, 0, bytesRead);
+                    totalRead += bytesRead;
+                    
+                    if (totalBytes.HasValue && totalBytes.Value > 0)
+                    {
+                        int percent = (int)((totalRead * 100) / totalBytes.Value);
+                        if (percent != lastPercent)
+                        {
+                            lastPercent = percent;
+                            Progress?.Invoke(this, new AlpmProgressEventArgs(
+                                AlpmProgressType.PackageDownload,
+                                fileName,
+                                percent,
+                                (ulong)totalBytes.Value,
+                                (ulong)totalRead
+                            ));
+                        }
+                    }
+                }
+                
+                // Ensure 100% is sent
+                if (lastPercent != 100)
+                {
+                    Progress?.Invoke(this, new AlpmProgressEventArgs(
+                        AlpmProgressType.PackageDownload,
+                        fileName,
+                        100,
+                        (ulong)(totalBytes ?? (long)totalRead),
+                        (ulong)totalRead
+                    ));
+                }
             }
             catch (Exception ex)
             {
@@ -320,8 +373,9 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
 
             return 0;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.Error.WriteLine($"[DEBUG_LOG] Download failed for {fullUrl}: {ex.Message}");
             return -1;
         }
     }
@@ -872,6 +926,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
         try
         {
             string? pkgName = pkgNamePtr != IntPtr.Zero ? Marshal.PtrToStringUTF8(pkgNamePtr) : null;
+            Console.Error.WriteLine($"[DEBUG_LOG] ALPM Progress: {progress}, Pkg: {pkgName}, %: {percent}");
 
             Progress?.Invoke(this, new AlpmProgressEventArgs(
                 progress,

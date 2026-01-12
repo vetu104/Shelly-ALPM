@@ -69,7 +69,8 @@ public class MainWindowViewModel : ViewModelBase, IScreen
                 
                 if (!string.IsNullOrEmpty(args.PackageName))
                 {
-                    ProcessingMessage = $"Processing {args.PackageName}...";
+                    var prefix = args.ProgressType == AlpmProgressType.PackageDownload ? "Downloading" : "Processing";
+                    ProcessingMessage = $"{prefix} {args.PackageName}...";
                 }
             });
 

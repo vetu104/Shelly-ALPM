@@ -11,5 +11,6 @@ public enum AlpmProgressType
     DiskspaceStart,
     IntegrityStart,
     LoadStart,
-    KeyringStart
+    KeyringStart,
+    PackageDownload = 100
 }
