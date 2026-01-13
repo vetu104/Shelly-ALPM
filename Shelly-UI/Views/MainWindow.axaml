@@ -65,20 +65,30 @@
         </SplitView>
         <Panel IsVisible="{Binding IsProcessing}" Background="#80000000">
             <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                    CornerRadius="10"
-                    Padding="20"
+                    CornerRadius="12"
+                    Padding="30"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    BoxShadow="0 4 20 0 #40000000">
-                <StackPanel Spacing="15">
+                    MinWidth="400"
+                    BoxShadow="0 8 32 0 #60000000">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Package Operations"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center" />
+                    
                     <ProgressBar Value="{Binding ProgressValue}" 
                                  IsIndeterminate="{Binding ProgressIndeterminate}" 
-                                 Height="4" 
+                                 Height="8" 
                                  Minimum="0" 
-                                 Maximum="100" />
+                                 Maximum="100"
+                                 CornerRadius="4" />
+                    
                     <TextBlock Text="{Binding ProcessingMessage}"
                                HorizontalAlignment="Center"
-                               FontSize="16" />
+                               FontSize="14"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center" />
                 </StackPanel>
             </Border>
         </Panel>

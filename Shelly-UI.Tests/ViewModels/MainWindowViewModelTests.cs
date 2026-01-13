@@ -38,6 +38,9 @@ public class MainWindowViewModelTests : TestScheduler
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.PackageOperationStart, "test-package"));
 
+        // Trigger scheduler
+        AdvanceBy(1);
+
         Assert.That(vm.IsProcessing, Is.True);
         Assert.That(vm.ProcessingMessage, Contains.Substring("test-package"));
     }
@@ -49,6 +52,9 @@ public class MainWindowViewModelTests : TestScheduler
         
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.PackageOperationStart, "test-package"));
+
+        // Trigger scheduler
+        AdvanceBy(1);
 
         Assert.That(vm.IsProcessing, Is.True);
         
@@ -67,6 +73,9 @@ public class MainWindowViewModelTests : TestScheduler
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.PackageOperationStart, "test-package-1"));
 
+        // Trigger scheduler
+        AdvanceBy(1);
+
         Assert.That(vm.IsProcessing, Is.True);
         
         // Advance time by 29 seconds
@@ -76,6 +85,9 @@ public class MainWindowViewModelTests : TestScheduler
         // New event
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.PackageOperationStart, "test-package-2"));
+
+        // Trigger scheduler
+        AdvanceBy(1);
         
         // Advance time by another 29 seconds (total 58 from start, but only 29 from last event)
         AdvanceBy(TimeSpan.FromSeconds(29).Ticks);
@@ -93,17 +105,29 @@ public class MainWindowViewModelTests : TestScheduler
         
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.TransactionStart, null));
+
+        // Trigger scheduler
+        AdvanceBy(1);
         
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.PackageOperationStart, "test-package"));
+
+        // Trigger scheduler
+        AdvanceBy(1);
         
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.PackageOperationDone, "test-package"));
+
+        // Trigger scheduler
+        AdvanceBy(1);
         
         Assert.That(vm.IsProcessing, Is.True);
 
         _alpmManagerMock.Raise(m => m.PackageOperation += null, 
             new AlpmPackageOperationEventArgs(AlpmEventType.TransactionDone, null));
+
+        // Trigger scheduler
+        AdvanceBy(1);
 
         Assert.That(vm.IsProcessing, Is.False);
         Assert.That(vm.ProcessingMessage, Is.Empty);
@@ -123,5 +147,21 @@ public class MainWindowViewModelTests : TestScheduler
         Assert.That(vm.ProgressValue, Is.EqualTo(50));
         Assert.That(vm.ProgressIndeterminate, Is.False);
         Assert.That(vm.ProcessingMessage, Contains.Substring("test-package"));
+    }
+
+    [Test]
+    public void Progress_ShouldUpdateMessage_WhenPackageNameIsNull()
+    {
+        var vm = new MainWindowViewModel(_configServiceMock.Object, _appCacheMock.Object, _alpmManagerMock.Object, this);
+
+        _alpmManagerMock.Raise(m => m.Progress += null,
+            new AlpmProgressEventArgs(AlpmProgressType.AddStart, null, 75, 100, 75));
+
+        // Trigger scheduler
+        AdvanceBy(1);
+
+        Assert.That(vm.ProgressValue, Is.EqualTo(75));
+        Assert.That(vm.ProgressIndeterminate, Is.False);
+        Assert.That(vm.ProcessingMessage, Contains.Substring("75%"));
     }
 }
