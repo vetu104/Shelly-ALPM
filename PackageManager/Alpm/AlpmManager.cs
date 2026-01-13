@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using PackageManager.Models;
 using PackageManager.Utilities;
 using static PackageManager.Alpm.AlpmReference;
 

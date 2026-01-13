@@ -6,7 +6,6 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
-using Eto.Drawing;
 using ReactiveUI;
 using Shelly_UI.Models;
 using Shelly_UI.Services;

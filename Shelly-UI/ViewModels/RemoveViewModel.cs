@@ -73,6 +73,7 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
                 {
                     AvailablePackages.Add(pkg);
                 }
+
                 this.RaisePropertyChanged(nameof(AvailablePackages));
             });
         }
@@ -89,12 +90,13 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
             return AvailablePackages;
         }
 
-        return AvailablePackages.Where(p => 
+        return AvailablePackages.Where(p =>
             p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
             p.Version.Contains(searchText, StringComparison.OrdinalIgnoreCase));
     }
-    
+
     private bool _showConfirmDialog;
+
     public bool ShowConfirmDialog
     {
         get => _showConfirmDialog;
@@ -112,13 +114,15 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
         if (selectedPackages.Any())
         {
             ShowConfirmDialog = false;
-            await Task.Run(() => _alpmManager.RemovePackages(selectedPackages));
+            await Task.Run(() =>
+                _alpmManager.RemovePackages(selectedPackages, AlpmTransFlag.Cascade | AlpmTransFlag.Recurse));
         }
         else
         {
             ShowConfirmDialog = false;
         }
     }
+
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
 
     public System.Reactive.Unit Unit => System.Reactive.Unit.Default;
