@@ -9,18 +9,23 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using PackageManager.Alpm;
 using ReactiveUI;
+using Shelly_UI.Enums;
 using Shelly_UI.Models;
 using Shelly_UI.Services;
+using Shelly_UI.Services.AppCache;
 
 namespace Shelly_UI.ViewModels;
 
 public class HomeViewModel : ViewModelBase, IRoutableViewModel
 {
-    public HomeViewModel(IScreen screen)
+    private IAppCache _appCache;
+    
+    public HomeViewModel(IScreen screen, IAppCache appCache)
     {
         HostScreen = screen;
         LoadData();
         LoadFeed();
+        _appCache = appCache;
     }
 
     private async void LoadData()
@@ -32,6 +37,7 @@ public class HomeViewModel : ViewModelBase, IRoutableViewModel
             {
                 InstalledPackages = new ObservableCollection<AlpmPackageDto>(packages);
                 this.RaisePropertyChanged(nameof(InstalledPackages));
+                _appCache.StoreAsync(nameof(CacheEnums.InstalledCache), packages);
             });
         }
         catch (Exception e)

@@ -117,4 +117,7 @@
     <data name="Confirm" xml:space="preserve">
         <value>Confirm</value>
     </data>
+    <data name="Installed" xml:space="preserve">
+        <value>Installed</value>
+    </data>
 </root>

@@ -30,7 +30,7 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
         AvaliablePackages = new ObservableCollection<PackageModel>();
 
         _appCache = appCache;
-
+        
         _filteredPackages = this
             .WhenAnyValue(x => x.SearchText, x => x.AvaliablePackages.Count, (s, c) => s)
             .Throttle(TimeSpan.FromMilliseconds(250))
@@ -67,26 +67,15 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
     private async void LoadData()
     {
         var cachedPackages = await _appCache.GetAsync<List<PackageModel>?>(nameof(CacheEnums.PackageCache));
-
-        if (cachedPackages != null)
-        {
-            RxApp.MainThreadScheduler.Schedule(() =>
-            {
-                foreach (var model in cachedPackages)
-                {
-                    AvaliablePackages.Add(model);
-                }
-
-                this.RaisePropertyChanged(nameof(AvaliablePackages));
-            });
-            return;
-        }
         
         try
         {
             await Task.Run(() => _alpmManager.Initialize());
             var packages = await Task.Run(() => _alpmManager.GetAvailablePackages());
 
+            var installed = await _appCache.GetAsync<List<AlpmPackageDto>?>(nameof(CacheEnums.InstalledCache));
+            var installedNames = new HashSet<string>(installed?.Select(x => x.Name) ?? Enumerable.Empty<string>());
+           
             var models = packages.Select(u => new PackageModel
             {
                 Name = u.Name,
@@ -94,9 +83,10 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
                 DownloadSize = u.Size,
                 Description = u.Description,
                 Url = u.Url,
-                IsChecked = false
+                IsChecked = false,
+                IsInstalled = installedNames.Contains(u.Name)
             }).ToList();
-
+            
             await _appCache.StoreAsync(nameof(CacheEnums.PackageCache), models);
 
             RxApp.MainThreadScheduler.Schedule(() =>

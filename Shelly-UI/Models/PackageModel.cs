@@ -17,6 +17,8 @@ public class PackageModel : ReactiveObject
     
     public string? Url { get; set; }
 
+    public bool IsInstalled { get; set; } = false;
+
     private bool _isChecked;
     public bool IsChecked { 
         get => _isChecked; 

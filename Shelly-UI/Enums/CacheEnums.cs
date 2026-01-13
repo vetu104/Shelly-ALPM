@@ -5,4 +5,5 @@ public enum CacheEnums
     PackageCache,
     RemoveCache,
     UpdateCache,
+    InstalledCache
 }

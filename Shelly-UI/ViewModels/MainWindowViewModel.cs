@@ -102,7 +102,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
                 ProcessingMessage = string.Empty;
             });
 
-        GoHome = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new HomeViewModel(this)));
+        GoHome = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new HomeViewModel(this, appCache)));
         GoPackages = ReactiveCommand.CreateFromObservable(() =>
         {
             _cachedPackages ??= new PackageViewModel(this, appCache);
