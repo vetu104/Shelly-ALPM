@@ -116,6 +116,7 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
             ShowConfirmDialog = false;
             await Task.Run(() =>
                 _alpmManager.RemovePackages(selectedPackages, AlpmTransFlag.Cascade | AlpmTransFlag.Recurse));
+            await Refresh();
         }
         else
         {

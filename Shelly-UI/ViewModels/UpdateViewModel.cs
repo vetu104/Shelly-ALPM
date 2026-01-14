@@ -60,6 +60,7 @@ public class UpdateViewModel : ViewModelBase, IRoutableViewModel
         if (selectedPackages.Any())
         {
             await Task.Run(() => _alpmManager.UpdatePackages(selectedPackages));
+            await Sync();
         }
     }
 

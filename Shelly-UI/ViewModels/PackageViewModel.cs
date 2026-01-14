@@ -51,6 +51,7 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
             await Task.Run(() => _alpmManager.IntializeWithSync());
             // Clear cache and reload data by storing null
             await _appCache.StoreAsync<List<PackageModel>?>(nameof(CacheEnums.PackageCache), null);
+            await _appCache.StoreAsync(nameof(CacheEnums.InstalledCache), _alpmManager.GetInstalledPackages());
             
             RxApp.MainThreadScheduler.Schedule(() =>
             {
@@ -137,6 +138,7 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
         {
             ShowConfirmDialog = false;
             await Task.Run(() => _alpmManager.InstallPackages(selectedPackages));
+            await Sync();
         }
         else
         {
