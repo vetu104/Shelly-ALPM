@@ -206,6 +206,15 @@ public class MainWindowViewModel : ViewModelBase, IScreen
 
     #region MenuItemSelectionNav
 
+    private bool _isPackageOpen;
+    
+    
+    public bool IsPackageOpen 
+    {
+        get => _isPackageOpen;
+        set => this.RaiseAndSetIfChanged(ref _isPackageOpen, value);
+    }
+    
     public void TogglePackageMenu()
     {
         if (!IsPaneOpen)
@@ -219,13 +228,65 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         }
     }
     
-    private bool _isPackageOpen;
-    public bool IsPackageOpen 
+    private bool _isAurOpen;
+    public bool IsAurOpen 
     {
-        get => _isPackageOpen;
-        set => this.RaiseAndSetIfChanged(ref _isPackageOpen, value);
+        get => _isAurOpen;
+        set => this.RaiseAndSetIfChanged(ref _isAurOpen, value);
     }
-
+    
+    public void ToggleAurMenu()
+    {
+        if (!IsPaneOpen)
+        {
+            IsPaneOpen = true;
+            IsAurOpen = true;
+        }
+        else
+        {
+            IsAurOpen = !IsAurOpen;
+        }
+    }
+    
+    private bool _isSnapOpen;
+    public bool IsSnapOpen 
+    {
+        get => _isSnapOpen;
+        set => this.RaiseAndSetIfChanged(ref _isSnapOpen, value);
+    }
+    
+    public void ToggleSnapMenu()
+    {
+        if (!IsPaneOpen)
+        {
+            IsPaneOpen = true;
+            IsSnapOpen = true;
+        }
+        else
+        {
+            IsSnapOpen = !IsSnapOpen;
+        }
+    }
+    
+    private bool _isFlatpakOpen;
+    public bool IsFlatpakOpen 
+    {
+        get => _isFlatpakOpen;
+        set => this.RaiseAndSetIfChanged(ref _isFlatpakOpen, value);
+    }
+    
+    public void ToggleFlatpakMenu()
+    {
+        if (!IsPaneOpen)
+        {
+            IsPaneOpen = true;
+            IsFlatpakOpen = true;
+        }
+        else
+        {
+            IsFlatpakOpen = !IsFlatpakOpen;
+        }
+    }
     #endregion
 }
 
