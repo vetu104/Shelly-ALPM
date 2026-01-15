@@ -9,10 +9,6 @@ using Avalonia.Themes.Fluent;
 using ReactiveUI;
 using Shelly_UI.Models;
 using Shelly_UI.Services;
-using NetSparkleUpdater;
-using NetSparkleUpdater.SignatureVerifiers;
-using NetSparkleUpdater.UI.Avalonia;
-using NetSparkleUpdater.Enums;
 
 namespace Shelly_UI.ViewModels;
 
@@ -131,11 +127,8 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         }
 
         var appcastUrl = "https://github.com/ZoeyErinBauer/Shelly-ALPM/releases/latest/download/appcast.xml";
-        var updater = new SparkleUpdater(appcastUrl, new Ed25519Checker(SecurityMode.Unsafe))
-        {
-            UIFactory = new NetSparkleUpdater.UI.Avalonia.UIFactory()
-        };
 
-        await updater.CheckForUpdatesAtUserRequest();
+
+        
     }
 }

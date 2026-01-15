@@ -31,18 +31,11 @@ jobs:
         zip -r ../Shelly-ALPM-linux-x64.zip .
         cd ../..
         
-    - name: Generate AppCast
-      run: |
-        dotnet tool install --global netsparkleupdater.tools.appcastgenerator
-        export PATH="$PATH:$HOME/.dotnet/tools"
-        netsparkle-generate-appcast -b ./publish/shelly-ui -u https://github.com/ZoeyErinBauer/Shelly-ALPM/releases/latest/download/ -o ./publish/appcast.xml -n Shelly-ALPM
-
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
           publish/Shelly-ALPM-linux-x64.zip
-          publish/appcast.xml
         draft: false
         prerelease: false
       env:
