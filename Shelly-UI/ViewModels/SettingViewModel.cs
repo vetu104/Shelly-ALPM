@@ -40,6 +40,8 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         var config = _configService.LoadConfig();
         _isDarkMode = config.DarkMode;
 
+        _ = SetUpdateText();
+        
         CheckForUpdatesCommand = ReactiveCommand.CreateFromTask(CheckForUpdates);
     }
 
@@ -135,7 +137,6 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             return;
         }
         
-
         bool updateAvailable = await _updateService.CheckForUpdateAsync();
         if (updateAvailable)
         {
@@ -143,5 +144,18 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             // For now, as per requirement, we proceed with download and install
             await _updateService.DownloadAndInstallUpdateAsync();
         }
+    }
+    
+    private async Task SetUpdateText()
+    {
+        UpdateAvailableText = await _appCache.GetAsync<bool>(nameof(CacheEnums.UpdateAvailableCache)) ? "Update Available Click to Download" : "Checking for updates...";
+    }
+    
+    private string _updateAvailable = "Checking for updates...";
+
+    public string UpdateAvailableText
+    {
+        get => _updateAvailable;
+        set => this.RaiseAndSetIfChanged(ref _updateAvailable, value);
     }
 }

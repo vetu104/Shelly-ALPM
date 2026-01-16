@@ -38,13 +38,13 @@
         <ToggleSwitch Content="Enable AUR (WIP)" IsEnabled="False"  IsChecked="{Binding EnableAur, Mode=TwoWay}"></ToggleSwitch>
         <ToggleSwitch Content="Enable FlatPack (WIP)" IsEnabled="False"  IsChecked="{Binding EnableFlatpak, Mode=TwoWay}"></ToggleSwitch>
         <ToggleSwitch Content="Enable Snap (WIP)" IsEnabled="False"  IsChecked="{Binding EnableSnap, Mode=TwoWay}"></ToggleSwitch>
-        <Button Content="{x:Static lang:Resources.CheckForUpdates}"
+        <Button Content="{Binding UpdateAvailableText}"
                 Command="{Binding CheckForUpdatesCommand}"
                 IsVisible="{Binding IsUpdateCheckVisible}"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Center"
                 Padding="0,10"
                 Background="{DynamicResource SystemAccentColor}"
-                Foreground="{DynamicResource SystemBaseHighColor}"/>
+                Foreground="{DynamicResource SystemBaseHighColor}" />
     </StackPanel>
 </UserControl>

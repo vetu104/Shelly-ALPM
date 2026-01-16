@@ -10,6 +10,7 @@ using ReactiveUI;
 using Material.Icons;
 using Microsoft.Extensions.DependencyInjection;
 using PackageManager.Alpm;
+using Shelly_UI.Enums;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
 
@@ -351,6 +352,45 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         };
     }
 
+    #endregion
+    
+    #region UpdateNotification
+
+    private async Task CheckForUpdates()
+    {
+        
+       try
+        {
+            if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/share/Shelly"))
+            {
+                return;
+            }
+            var updateAvailable = await _services.GetRequiredService<IUpdateService>().CheckForUpdateAsync();
+            if (updateAvailable)
+            {
+                ShowNotification = true;
+                await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), true);
+                return;
+            }
+
+            ShowNotification = false;
+            await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), false);
+
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private bool _showNotification = false;
+
+    public bool ShowNotification
+    {
+        get => _showNotification;
+        set => this.RaiseAndSetIfChanged(ref _showNotification, value);
+    }
+    
     #endregion
 }
 
