@@ -7,8 +7,10 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using ReactiveUI;
+using Shelly_UI.Enums;
 using Shelly_UI.Models;
 using Shelly_UI.Services;
+using Shelly_UI.Services.AppCache;
 using Velopack;
 using Velopack.Sources;
 
@@ -19,11 +21,14 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
     private string _selectedTheme;
 
     private readonly IConfigService _configService;
+    
+    private IAppCache _appCache;
 
-    public SettingViewModel(IScreen screen, IConfigService configService)
+    public SettingViewModel(IScreen screen, IConfigService configService, IAppCache appCache)
     {
         HostScreen = screen;
         _configService = configService;
+        _appCache = appCache;
         var fluentTheme = Application.Current?.Styles.OfType<FluentTheme>().FirstOrDefault();
         if (fluentTheme != null && fluentTheme.Palettes.TryGetValue(ThemeVariant.Dark, out var dark) && dark is { } pal)
         {
@@ -32,8 +37,11 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
         var config = _configService.LoadConfig();
         _isDarkMode = config.DarkMode;
-
+        
         CheckForUpdatesCommand = ReactiveCommand.CreateFromTask(CheckForUpdates);
+        
+        _ = SetUpdateText();
+        
     }
 
     private string _accentHex = "#018574";
@@ -113,6 +121,15 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         }
     }
 
+    private string _updateAvailable = "Checking for updates...";
+
+    public string UpdateAvailableText
+    {
+        get => _updateAvailable;
+        set => this.RaiseAndSetIfChanged(ref _updateAvailable, value);
+    }
+    
+    
     public IScreen HostScreen { get; }
 
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
@@ -127,7 +144,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         {
             return;
         }
-
+        
         var mgr = new UpdateManager(new GithubSource("https://github.com/ZoeyErinBauer/Shelly-ALPM", null, false));
 
         var newVersion = await mgr.CheckForUpdatesAsync();
@@ -138,5 +155,10 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
         await mgr.DownloadUpdatesAsync(newVersion);
         mgr.ApplyUpdatesAndRestart(newVersion);
+    }
+
+    private async Task SetUpdateText()
+    {
+        UpdateAvailableText = await _appCache.GetAsync<bool>(nameof(CacheEnums.UpdateAvailableCache)) ? "Update Available Click to Download" : "Checking for updates...";
     }
 }

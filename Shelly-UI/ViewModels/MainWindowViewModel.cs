@@ -5,23 +5,31 @@ using System.Reactive.Linq;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Subjects;
+using System.Threading.Tasks;
 using Shelly_UI.Assets;
 using ReactiveUI;
 using Material.Icons;
 using PackageManager.Alpm;
+using Shelly_UI.Enums;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
+using Velopack;
+using Velopack.Sources;
 
 namespace Shelly_UI.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase, IScreen
 {
     private PackageViewModel? _cachedPackages;
+    
+    private IAppCache _appCache;
 
     public MainWindowViewModel(IConfigService configService, IAppCache appCache, IAlpmManager alpmManager,
         IScheduler? scheduler = null)
     {
         scheduler ??= RxApp.MainThreadScheduler;
+        
+        _appCache = appCache;
 
         var packageOperationEvents = Observable.FromEventPattern<AlpmPackageOperationEventArgs>(
             h => alpmManager.PackageOperation += h,
@@ -77,7 +85,8 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             .ObserveOn(scheduler)
             .Subscribe(pattern =>
             {
-                if (pattern.EventArgs.ProgressType == AlpmProgressType.AddStart || pattern.EventArgs.ProgressType == AlpmProgressType.RemoveStart)
+                if (pattern.EventArgs.ProgressType == AlpmProgressType.AddStart ||
+                    pattern.EventArgs.ProgressType == AlpmProgressType.RemoveStart)
                 {
                     IsProcessing = true;
                 }
@@ -128,6 +137,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             {
                 questionResponseSubject.OnNext(0); // Default to No
             }
+
             ShowQuestion = false;
         });
 
@@ -158,11 +168,13 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         GoUpdate = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new UpdateViewModel(this)));
         GoRemove = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new RemoveViewModel(this)));
         GoSetting = ReactiveCommand.CreateFromObservable(() =>
-            Router.Navigate.Execute(new SettingViewModel(this, configService)));
-        
+            Router.Navigate.Execute(new SettingViewModel(this, configService, appCache)));
+
         GoHome.Execute(Unit.Default);
+        _ = CheckForUpdates();
+
     }
-    
+
     private bool _isPaneOpen = false;
 
     public bool IsPaneOpen
@@ -204,6 +216,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private bool _showQuestion;
+
     public bool ShowQuestion
     {
         get => _showQuestion;
@@ -211,6 +224,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private string _questionTitle = string.Empty;
+
     public string QuestionTitle
     {
         get => _questionTitle;
@@ -218,6 +232,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private string _questionText = string.Empty;
+
     public string QuestionText
     {
         get => _questionText;
@@ -250,14 +265,14 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     #region MenuItemSelectionNav
 
     private bool _isPackageOpen;
-    
-    
-    public bool IsPackageOpen 
+
+
+    public bool IsPackageOpen
     {
         get => _isPackageOpen;
         set => this.RaiseAndSetIfChanged(ref _isPackageOpen, value);
     }
-    
+
     public void TogglePackageMenu()
     {
         if (!IsPaneOpen)
@@ -270,14 +285,15 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             IsPackageOpen = !IsPackageOpen;
         }
     }
-    
+
     private bool _isAurOpen;
-    public bool IsAurOpen 
+
+    public bool IsAurOpen
     {
         get => _isAurOpen;
         set => this.RaiseAndSetIfChanged(ref _isAurOpen, value);
     }
-    
+
     public void ToggleAurMenu()
     {
         if (!IsPaneOpen)
@@ -290,14 +306,15 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             IsAurOpen = !IsAurOpen;
         }
     }
-    
+
     private bool _isSnapOpen;
-    public bool IsSnapOpen 
+
+    public bool IsSnapOpen
     {
         get => _isSnapOpen;
         set => this.RaiseAndSetIfChanged(ref _isSnapOpen, value);
     }
-    
+
     public void ToggleSnapMenu()
     {
         if (!IsPaneOpen)
@@ -310,14 +327,15 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             IsSnapOpen = !IsSnapOpen;
         }
     }
-    
+
     private bool _isFlatpakOpen;
-    public bool IsFlatpakOpen 
+
+    public bool IsFlatpakOpen
     {
         get => _isFlatpakOpen;
         set => this.RaiseAndSetIfChanged(ref _isFlatpakOpen, value);
     }
-    
+
     public void ToggleFlatpakMenu()
     {
         if (!IsPaneOpen)
@@ -345,6 +363,45 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         };
     }
 
+    #endregion
+
+    #region UpdateNotification
+
+    private async Task CheckForUpdates()
+    {
+        try
+        {
+            if (AppContext.BaseDirectory.StartsWith("/usr/share"))
+            {
+                return;
+            }
+
+            var mgr = new UpdateManager(new GithubSource("https://github.com/ZoeyErinBauer/Shelly-ALPM", null, false));
+
+            var newVersion = await mgr.CheckForUpdatesAsync();
+            if (newVersion == null)
+            {
+                await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), false);
+                return;
+            }
+
+            ShowNotification = true;
+            await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), true);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private bool _showNotification = false;
+
+    public bool ShowNotification
+    {
+        get => _showNotification;
+        set => this.RaiseAndSetIfChanged(ref _showNotification, value);
+    }
+    
     #endregion
 }
 
