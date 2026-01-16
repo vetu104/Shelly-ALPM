@@ -1,32 +1,30 @@
 ﻿using System;
-using System.Linq;
+
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using Shelly_UI.Assets;
 using ReactiveUI;
 using Material.Icons;
+using Microsoft.Extensions.DependencyInjection;
 using PackageManager.Alpm;
 using Shelly_UI.Enums;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
-using Velopack;
-using Velopack.Sources;
 
 namespace Shelly_UI.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase, IScreen
 {
     private PackageViewModel? _cachedPackages;
-    
+    private readonly IServiceProvider _services;
     private IAppCache _appCache;
 
-    public MainWindowViewModel(IConfigService configService, IAppCache appCache, IAlpmManager alpmManager,
+    public MainWindowViewModel(IConfigService configService, IAppCache appCache, IAlpmManager alpmManager, IServiceProvider services,
         IScheduler? scheduler = null)
     {
+        _services = services;
         scheduler ??= RxApp.MainThreadScheduler;
         
         _appCache = appCache;
@@ -167,9 +165,8 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         });
         GoUpdate = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new UpdateViewModel(this)));
         GoRemove = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new RemoveViewModel(this)));
-        GoSetting = ReactiveCommand.CreateFromObservable(() =>
-            Router.Navigate.Execute(new SettingViewModel(this, configService, appCache)));
-
+        GoSetting = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new SettingViewModel(this, configService, _services.GetRequiredService<IUpdateService>(), appCache)));
+        
         GoHome.Execute(Unit.Default);
         _ = CheckForUpdates();
 
@@ -265,8 +262,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     #region MenuItemSelectionNav
 
     private bool _isPackageOpen;
-
-
+    
     public bool IsPackageOpen
     {
         get => _isPackageOpen;
@@ -371,22 +367,18 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     {
         try
         {
-            if (AppContext.BaseDirectory.StartsWith("/usr/share"))
+            if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/share/Shelly"))
             {
                 return;
             }
 
-            var mgr = new UpdateManager(new GithubSource("https://github.com/ZoeyErinBauer/Shelly-ALPM", null, false));
-
-            var newVersion = await mgr.CheckForUpdatesAsync();
-            if (newVersion == null)
+            bool updateAvailable = await _updateService.CheckForUpdateAsync();
+            if (updateAvailable)
             {
-                await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), false);
-                return;
+                ShowNotification = true;
+                await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), true);
             }
 
-            ShowNotification = true;
-            await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), true);
         }
         catch (Exception e)
         {

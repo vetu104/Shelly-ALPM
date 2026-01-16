@@ -15,6 +15,16 @@
         <InstructionSet>x86-64-v3</InstructionSet>
 
     </PropertyGroup>
+    
+    <PropertyGroup>
+        <Version>1.0.3-alpha4</Version>
+        <AssemblyVersion>1.0.3</AssemblyVersion>
+        <AssemblyTitle>Shelly VALPM</AssemblyTitle>
+        <Description>Shelly is a visual arch linux package manager</Description>
+        <Company>ZC Development</Company>
+        <Product>Shelly VALPM by ZC Development</Product>
+        <Copyright>2026 ZC Development</Copyright>
+    </PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
@@ -39,7 +49,6 @@
         <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8"/>
         <PackageReference Include="Material.Icons.Avalonia" Version="2.1.10"/>
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10"/>
-        <PackageReference Include="Velopack" Version="0.0.1053"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\PackageManager\PackageManager.csproj"/>

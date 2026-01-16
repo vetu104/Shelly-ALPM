@@ -8,11 +8,9 @@ using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using ReactiveUI;
 using Shelly_UI.Enums;
-using Shelly_UI.Models;
+
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
-using Velopack;
-using Velopack.Sources;
 
 namespace Shelly_UI.ViewModels;
 
@@ -22,12 +20,15 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
     private readonly IConfigService _configService;
     
+    private readonly IUpdateService _updateService;
+    
     private IAppCache _appCache;
 
-    public SettingViewModel(IScreen screen, IConfigService configService, IAppCache appCache)
+    public SettingViewModel(IScreen screen, IConfigService configService, IUpdateService updateService, IAppCache appCache)
     {
         HostScreen = screen;
         _configService = configService;
+        _updateService = updateService;
         _appCache = appCache;
         var fluentTheme = Application.Current?.Styles.OfType<FluentTheme>().FirstOrDefault();
         if (fluentTheme != null && fluentTheme.Palettes.TryGetValue(ThemeVariant.Dark, out var dark) && dark is { } pal)
@@ -37,11 +38,8 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
         var config = _configService.LoadConfig();
         _isDarkMode = config.DarkMode;
-        
+
         CheckForUpdatesCommand = ReactiveCommand.CreateFromTask(CheckForUpdates);
-        
-        _ = SetUpdateText();
-        
     }
 
     private string _accentHex = "#018574";
@@ -136,25 +134,22 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
     public ReactiveCommand<Unit, Unit> CheckForUpdatesCommand { get; }
 
-    public bool IsUpdateCheckVisible => !AppContext.BaseDirectory.StartsWith("/usr/share");
+    public bool IsUpdateCheckVisible => !AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") && !AppContext.BaseDirectory.StartsWith("/usr/share/Shelly");
 
     private async Task CheckForUpdates()
     {
-        if (AppContext.BaseDirectory.StartsWith("/usr/share"))
-        {
-            return;
-        }
-        
-        var mgr = new UpdateManager(new GithubSource("https://github.com/ZoeyErinBauer/Shelly-ALPM", null, false));
-
-        var newVersion = await mgr.CheckForUpdatesAsync();
-        if (newVersion == null)
+        if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/share/Shelly"))
         {
             return;
         }
 
-        await mgr.DownloadUpdatesAsync(newVersion);
-        mgr.ApplyUpdatesAndRestart(newVersion);
+        bool updateAvailable = await _updateService.CheckForUpdateAsync();
+        if (updateAvailable)
+        {
+            // Here you might want to show a dialog to the user
+            // For now, as per requirement, we proceed with download and install
+            await _updateService.DownloadAndInstallUpdateAsync();
+        }
     }
 
     private async Task SetUpdateText()
