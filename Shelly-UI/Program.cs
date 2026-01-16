@@ -1,8 +1,12 @@
 ﻿using Avalonia;
 using ReactiveUI.Avalonia;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using PackageManager.User;
+using Shelly_UI.Enums;
+using Shelly.Utilities.System;
+
 namespace Shelly_UI;
 
 sealed class Program
@@ -21,12 +25,14 @@ sealed class Program
 
         if (!UserIdentity.IsRoot())
         {
+            var wmVars = EnvironmentManager.CreateWindowManagerVars();
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "pkexec",
-                    Arguments = $"env DISPLAY={Environment.GetEnvironmentVariable("DISPLAY")} XAUTHORITY={Environment.GetEnvironmentVariable("XAUTHORITY")} {Process.GetCurrentProcess().MainModule?.FileName} {string.Join(" ", args)}",
+                    Arguments =
+                        $"env {wmVars} DISPLAY={Environment.GetEnvironmentVariable("DISPLAY")} XAUTHORITY={Environment.GetEnvironmentVariable("XAUTHORITY")} {Process.GetCurrentProcess().MainModule?.FileName} {string.Join(" ", args)}",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
@@ -38,7 +44,7 @@ sealed class Program
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
-    
+
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
@@ -47,4 +53,6 @@ sealed class Program
             .WithInterFont()
             .LogToTrace()
             .UseReactiveUI();
+    
+    
 }
