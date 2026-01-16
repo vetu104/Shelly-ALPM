@@ -1,5 +1,8 @@
 # Shelly: A Visual Arch Package Manager
 
+![Shelly Wiki](https://img.shields.io/badge/Shelly-Wiki-blue)
+
+
 Shelly is a modern, visual package manager for Arch Linux, built with .NET 10 and Avalonia. It provides a user-friendly
 interface for managing your Arch Linux system's packages by leveraging the power of `libalpm`.
 
