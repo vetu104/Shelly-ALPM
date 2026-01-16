@@ -1,5 +1,4 @@
 ﻿using System;
-
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive;
@@ -22,12 +21,13 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     private readonly IServiceProvider _services;
     private IAppCache _appCache;
 
-    public MainWindowViewModel(IConfigService configService, IAppCache appCache, IAlpmManager alpmManager, IServiceProvider services,
+    public MainWindowViewModel(IConfigService configService, IAppCache appCache, IAlpmManager alpmManager,
+        IServiceProvider services,
         IScheduler? scheduler = null)
     {
         _services = services;
         scheduler ??= RxApp.MainThreadScheduler;
-        
+
         _appCache = appCache;
 
         var packageOperationEvents = Observable.FromEventPattern<AlpmPackageOperationEventArgs>(
@@ -166,11 +166,13 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         });
         GoUpdate = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new UpdateViewModel(this)));
         GoRemove = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new RemoveViewModel(this)));
-        GoSetting = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new SettingViewModel(this, configService, _services.GetRequiredService<IUpdateService>(), appCache)));
-        
+        GoSetting = ReactiveCommand.CreateFromObservable(() =>
+            Router.Navigate.Execute(new SettingViewModel(this, configService,
+                _services.GetRequiredService<IUpdateService>(), appCache)));
+
         GoHome.Execute(Unit.Default);
     }
-    
+
     private bool _isPaneOpen = false;
 
     public bool IsPaneOpen
@@ -212,6 +214,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private bool _showQuestion;
+
     public bool ShowQuestion
     {
         get => _showQuestion;
@@ -219,6 +222,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private string _questionTitle = string.Empty;
+
     public string QuestionTitle
     {
         get => _questionTitle;
@@ -226,6 +230,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private string _questionText = string.Empty;
+
     public string QuestionText
     {
         get => _questionText;
@@ -258,7 +263,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     #region MenuItemSelectionNav
 
     private bool _isPackageOpen;
-    
+
     public bool IsPackageOpen
     {
         get => _isPackageOpen;
@@ -279,12 +284,13 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     private bool _isAurOpen;
-    public bool IsAurOpen 
+
+    public bool IsAurOpen
     {
         get => _isAurOpen;
         set => this.RaiseAndSetIfChanged(ref _isAurOpen, value);
     }
-    
+
     public void ToggleAurMenu()
     {
         if (!IsPaneOpen)
@@ -297,14 +303,15 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             IsAurOpen = !IsAurOpen;
         }
     }
-    
+
     private bool _isSnapOpen;
-    public bool IsSnapOpen 
+
+    public bool IsSnapOpen
     {
         get => _isSnapOpen;
         set => this.RaiseAndSetIfChanged(ref _isSnapOpen, value);
     }
-    
+
     public void ToggleSnapMenu()
     {
         if (!IsPaneOpen)
@@ -317,14 +324,15 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             IsSnapOpen = !IsSnapOpen;
         }
     }
-    
+
     private bool _isFlatpakOpen;
-    public bool IsFlatpakOpen 
+
+    public bool IsFlatpakOpen
     {
         get => _isFlatpakOpen;
         set => this.RaiseAndSetIfChanged(ref _isFlatpakOpen, value);
     }
-    
+
     public void ToggleFlatpakMenu()
     {
         if (!IsPaneOpen)
@@ -353,18 +361,19 @@ public class MainWindowViewModel : ViewModelBase, IScreen
     }
 
     #endregion
-    
+
     #region UpdateNotification
 
     private async Task CheckForUpdates()
     {
-        
-       try
+        try
         {
-            if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/share/Shelly"))
+            if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") ||
+                AppContext.BaseDirectory.StartsWith("/usr/share/Shelly"))
             {
                 return;
             }
+
             var updateAvailable = await _services.GetRequiredService<IUpdateService>().CheckForUpdateAsync();
             if (updateAvailable)
             {
@@ -375,7 +384,6 @@ public class MainWindowViewModel : ViewModelBase, IScreen
 
             ShowNotification = false;
             await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), false);
-
         }
         catch (Exception e)
         {
@@ -390,7 +398,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         get => _showNotification;
         set => this.RaiseAndSetIfChanged(ref _showNotification, value);
     }
-    
+
     #endregion
 }
 

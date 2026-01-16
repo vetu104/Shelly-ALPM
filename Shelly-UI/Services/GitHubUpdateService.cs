@@ -29,16 +29,19 @@ public class GitHubUpdateService : IUpdateService
         try
         {
             var url = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest";
+            Console.Error.WriteLine("[DEBUG] Checking for updates...");
+            Console.Error.WriteLine($"[DEBUG] URL: {url}");
             _latestRelease = await _httpClient.GetFromJsonAsync(url, ShellyUIJsonContext.Default.GitHubRelease);
-
+            Console.Error.WriteLine($"[DEBUG] Latest release: {_latestRelease?.TagName}");
             if (_latestRelease == null) return false;
 
             var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            Console.Error.WriteLine($"[DEBUG] Current version: {currentVersion?.ToString(3)}");
             if (currentVersion == null) return false;
 
-            if (Version.TryParse(_latestRelease.TagName.TrimStart('v'), out var latestVersion))
+            if (Version.TryParse(_latestRelease.TagName.TrimStart('v').TrimEnd("-alpha"), out var latestVersion))
             {
-                Console.WriteLine($"Current version: {currentVersion}, Latest version: {latestVersion}");
+                Console.Error.WriteLine($"[DEBUG] Current version: {currentVersion}, Latest version: {latestVersion}");
                 return latestVersion > currentVersion;
             }
         }
@@ -58,8 +61,7 @@ public class GitHubUpdateService : IUpdateService
                 return;
         }
 
-        var asset = _latestRelease.Assets.FirstOrDefault(a => a.Name.EndsWith(".tar.gz")) 
-                    ?? _latestRelease.Assets.FirstOrDefault(a => a.Name.EndsWith(".zip"));
+        var asset = _latestRelease.Assets.FirstOrDefault(x => x.Name.EndsWith(".tar.gz") || x.Name.EndsWith(".zip"));
 
         if (asset == null)
         {
@@ -81,7 +83,8 @@ public class GitHubUpdateService : IUpdateService
             await File.WriteAllBytesAsync(tempPath, data);
 
             Console.WriteLine("Extracting update...");
-            if (asset.Name.EndsWith(".tar.gz"))
+            // Change the check to handle GitHub's tarball URL or the specific tempPath extension
+            if (asset.Name.Contains(".tar.gz") || tempPath.EndsWith(".tar.gz"))
             {
                 await ExtractTarGz(tempPath, extractPath);
             }
@@ -92,7 +95,7 @@ public class GitHubUpdateService : IUpdateService
 
             Console.WriteLine("Installing update...");
             await RunInstallScript(extractPath);
-            
+
             // Optionally notify user or restart.
             // For now, we've fulfilled the requirement.
         }
@@ -139,15 +142,15 @@ public class GitHubUpdateService : IUpdateService
         // Given the requirement "reinstall the application", and that we are running as root (per Program.cs),
         // we can move files to /usr/bin or wherever it was installed.
         // But usually it's safer to run a script if provided.
-        
+
         string installScript = Path.Combine(extractPath, "install.sh");
         if (!File.Exists(installScript))
         {
-             // Fallback: If no install script, maybe it's just the binaries.
-             // For now let's assume install.sh exists as it's common in Arch projects.
-             // If not, we might need a different strategy.
-             Console.WriteLine("No install.sh found in update package.");
-             return;
+            // Fallback: If no install script, maybe it's just the binaries.
+            // For now let's assume install.sh exists as it's common in Arch projects.
+            // If not, we might need a different strategy.
+            Console.WriteLine("No install.sh found in update package.");
+            return;
         }
 
         var process = new Process
@@ -165,7 +168,7 @@ public class GitHubUpdateService : IUpdateService
         };
 
         process.Start();
-        
+
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
 
@@ -178,9 +181,10 @@ public class GitHubUpdateService : IUpdateService
             {
                 throw new Exception("Installation cancelled or authentication failed.");
             }
+
             throw new Exception($"Installation script failed: {error}");
         }
-        
+
         Console.WriteLine("Update installed successfully. Please restart the application.");
     }
 }

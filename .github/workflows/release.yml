@@ -30,7 +30,6 @@ jobs:
         cp install.sh publish/shelly-ui/
         cp Shelly-UI/Assets/shellylogo.png publish/shelly-ui/
         cd publish/shelly-ui
-        zip -r ../Shelly-ALPM-linux-x64.zip .
         tar -czf ../Shelly-ALPM-linux-x64.tar.gz .
         cd ../..
         
@@ -38,7 +37,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          publish/Shelly-ALPM-linux-x64.zip
           publish/Shelly-ALPM-linux-x64.tar.gz
         draft: false
         prerelease: false

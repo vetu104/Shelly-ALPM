@@ -8,7 +8,6 @@ using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using ReactiveUI;
 using Shelly_UI.Enums;
-
 using Shelly_UI.Models;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
@@ -20,12 +19,13 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
     private string _selectedTheme;
 
     private readonly IConfigService _configService;
-    
+
     private readonly IUpdateService _updateService;
-    
+
     private IAppCache _appCache;
 
-    public SettingViewModel(IScreen screen, IConfigService configService, IUpdateService updateService, IAppCache appCache)
+    public SettingViewModel(IScreen screen, IConfigService configService, IUpdateService updateService,
+        IAppCache appCache)
     {
         HostScreen = screen;
         _configService = configService;
@@ -41,7 +41,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         _isDarkMode = config.DarkMode;
 
         _ = SetUpdateText();
-        
+
         CheckForUpdatesCommand = ReactiveCommand.CreateFromTask(CheckForUpdates);
     }
 
@@ -128,15 +128,19 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
     public ReactiveCommand<Unit, Unit> CheckForUpdatesCommand { get; }
 
-    public bool IsUpdateCheckVisible => !AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") && !AppContext.BaseDirectory.StartsWith("/usr/share/Shelly");
+    public bool IsUpdateCheckVisible => !AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") &&
+                                        !AppContext.BaseDirectory.StartsWith("/usr/share/Shelly") &&
+                                        !AppContext.BaseDirectory.StartsWith("/usr/bin/Shelly");
 
     private async Task CheckForUpdates()
     {
-        if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/share/Shelly"))
+#if !DEBUG
+        if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/share/Shelly") || AppContext.BaseDirectory.StartsWith("/usr/bin/Shelly"))
         {
             return;
         }
-        
+#endif
+
         bool updateAvailable = await _updateService.CheckForUpdateAsync();
         if (updateAvailable)
         {
@@ -145,12 +149,14 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             await _updateService.DownloadAndInstallUpdateAsync();
         }
     }
-    
+
     private async Task SetUpdateText()
     {
-        UpdateAvailableText = await _appCache.GetAsync<bool>(nameof(CacheEnums.UpdateAvailableCache)) ? "Update Available Click to Download" : "Checking for updates...";
+        UpdateAvailableText = await _appCache.GetAsync<bool>(nameof(CacheEnums.UpdateAvailableCache))
+            ? "Update Available Click to Download"
+            : "Checking for updates...";
     }
-    
+
     private string _updateAvailable = "Checking for updates...";
 
     public string UpdateAvailableText

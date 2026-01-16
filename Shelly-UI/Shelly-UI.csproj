@@ -19,7 +19,7 @@
     </PropertyGroup>
     
     <PropertyGroup>
-        <Version>1.0.3-alpha4</Version>
+        <Version>0.0.3-alpha4</Version>
         <AssemblyVersion>1.0.3</AssemblyVersion>
         <AssemblyTitle>Shelly VALPM</AssemblyTitle>
         <Description>Shelly is a visual arch linux package manager</Description>
