@@ -17,7 +17,6 @@
             <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="12,4" />
             <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
             <Setter Property="SeparatorBrush" Value="Transparent" />
         </Style>
@@ -64,6 +63,7 @@
                 ItemsSource="{Binding FilteredPackages}"
                 AutoGenerateColumns="False"
                 IsReadOnly="True"
+                CanUserResizeColumns="True"
                 GridLinesVisibility="None">
                 <DataGrid.Columns>
                     <DataGridTextColumn
@@ -84,6 +84,7 @@
                         Width="100" />
                     <DataGridTemplateColumn
                         Header=""
+                        CanUserResize="False"
                         Width="60">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

@@ -158,7 +158,11 @@ public class MainWindowViewModel : ViewModelBase, IScreen
             })
             .Subscribe();
 
-        GoHome = ReactiveCommand.CreateFromObservable(() => Router.Navigate.Execute(new HomeViewModel(this, appCache)));
+        GoHome = ReactiveCommand.CreateFromObservable(() =>
+        {
+            TurnOffMenuItems();
+            return Router.Navigate.Execute(new HomeViewModel(this, appCache));
+        });
         GoPackages = ReactiveCommand.CreateFromObservable(() =>
         {
             _cachedPackages ??= new PackageViewModel(this, appCache);
@@ -399,6 +403,63 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         set => this.RaiseAndSetIfChanged(ref _showNotification, value);
     }
 
+    #endregion
+    
+    #region MenuItemsToggle
+    
+    //Revisit later but works now easily for one set of items, may be a lot to manage in the future.
+
+    private void TurnOffMenuItems()
+    {
+        IsInstallPackActive = false;
+        IsUpdateActive = false;
+        IsRemoveActive = false;
+    }
+    
+    private bool _isRemoveActive;
+    public bool IsRemoveActive
+    {
+        get => _isRemoveActive;
+        set 
+        {
+            if (value) 
+            {
+                IsInstallPackActive = false;
+                IsUpdateActive = false;
+            }
+            this.RaiseAndSetIfChanged(ref _isRemoveActive, value);
+        }
+    }
+
+    private bool _isInstallPackActive;
+    public bool IsInstallPackActive
+    {
+        get => _isInstallPackActive;
+        set 
+        {
+            if (value) 
+            {
+                IsRemoveActive = false;
+                IsUpdateActive = false;
+            }
+            this.RaiseAndSetIfChanged(ref _isInstallPackActive, value);
+        }
+    }
+
+    private bool _isUpdateActive;
+    public bool IsUpdateActive
+    {
+        get => _isUpdateActive;
+        set 
+        {
+            if (value) 
+            {
+                IsRemoveActive = false;
+                IsInstallPackActive = false;
+            }
+            this.RaiseAndSetIfChanged(ref _isUpdateActive, value);
+        }
+    }
     #endregion
 }
 
