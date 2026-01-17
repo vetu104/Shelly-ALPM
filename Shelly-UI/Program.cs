@@ -80,9 +80,23 @@ sealed class Program
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+    {
+
+        var builder = AppBuilder.Configure<App>()
             .WithInterFont()
             .LogToTrace()
             .UseReactiveUI();
+
+        var sessionType = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE");
+        if (sessionType == "wayland")
+        {
+            // Force Wayland backend, no X11 fallback
+            return builder.With(new X11PlatformOptions { UseDBusFilePicker = false })
+                .UseSkia()
+                .With(new AvaloniaNativePlatformOptions())
+                .UsePlatformDetect(); // Will now prefer Wayland
+        }
+    
+        return builder.UsePlatformDetect();
+    }
 }

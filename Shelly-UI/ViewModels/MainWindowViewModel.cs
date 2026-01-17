@@ -370,6 +370,7 @@ public class MainWindowViewModel : ViewModelBase, IScreen
 
     private async Task CheckForUpdates()
     {
+        Console.WriteLine("Checking for updates...");
         try
         {
             if (AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") ||
@@ -391,7 +392,8 @@ public class MainWindowViewModel : ViewModelBase, IScreen
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Console.WriteLine("Failed to check for updates:");
+            Console.Error.WriteLine(e);
         }
     }
 
