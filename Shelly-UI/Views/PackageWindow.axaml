@@ -24,7 +24,6 @@
         </Style>
     </UserControl.Styles>
     <UserControl.Resources>
-        <converters:PaneMinHeightConverter x:Key="PaneMinHeightConverter" />
         <converters:BottomPanelHeightConverter x:Key="BottomPanelHeightConverter" />
     </UserControl.Resources>
     <Grid>
@@ -32,8 +31,7 @@
             <RowDefinition Height="*" MinHeight="200" />
             <RowDefinition Height="Auto" />
             <RowDefinition
-                Height="{Binding IsBottomPanelCollapsed, Converter={StaticResource BottomPanelHeightConverter}}"
-                MinHeight="{Binding !IsBottomPanelCollapsed, Converter={StaticResource PaneMinHeightConverter}}" />
+                Height="{Binding IsBottomPanelCollapsed, Converter={StaticResource BottomPanelHeightConverter}}"/>
         </Grid.RowDefinitions>
         <Border Grid.Row="0" Background="Transparent">
             <Grid Background="{DynamicResource SystemChromeLowColor}">
@@ -236,6 +234,7 @@
                 Padding="0" Margin="0,-12,10,0" Height="24" Width="24"
                 Background="{DynamicResource SystemAccentColor}"
                 Command="{Binding ToggleBottomPanel}"
+                IsVisible="{Binding IsBottomPanelVisible}"
                 ZIndex="10">
             <Panel>
                 <avalonia:MaterialIcon Kind="ChevronDown" Height="20" Width="20"

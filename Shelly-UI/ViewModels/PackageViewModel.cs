@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using DynamicData;
 using DynamicData.Binding;
 using PackageManager.Alpm;
@@ -24,6 +25,8 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
     private string? _searchText;
     private readonly ObservableAsPropertyHelper<IEnumerable<PackageModel>> _filteredPackages;
 
+    private readonly ConfigService _configService = new();
+    
     private IAppCache _appCache;
 
     private readonly ObservableAsPropertyHelper<string> _fullLogText;
@@ -33,11 +36,11 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
     {
         HostScreen = screen;
         AvaliablePackages = new ObservableCollection<PackageModel>();
-
-        
         
         _appCache = appCache;
 
+        var consoleEnabled = _configService.LoadConfig().ConsoleEnabled;
+        
         _filteredPackages = this
             .WhenAnyValue(x => x.SearchText, x => x.AvaliablePackages.Count, (s, c) => s)
             .Throttle(TimeSpan.FromMilliseconds(250))
@@ -45,15 +48,17 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
             .Select(Search)
             .ToProperty(this, x => x.FilteredPackages);
 
-        _fullLogText = ConsoleLogService.Instance.Logs
+        _fullLogText = consoleEnabled ? ConsoleLogService.Instance.Logs
             .ToObservableChangeSet() 
             .QueryWhenChanged(items => string.Join(Environment.NewLine, items))
             .ObserveOn(RxApp.MainThreadScheduler)
-            .ToProperty(this, x => x.FullLogText);
+            .ToProperty(this, x => x.FullLogText) : null;
         
         AlpmInstallCommand = ReactiveCommand.CreateFromTask(AlpmInstall);
         SyncCommand = ReactiveCommand.CreateFromTask(Sync);
         TogglePackageCheckCommand = ReactiveCommand.Create<PackageModel>(TogglePackageCheck);
+        
+        _isBottomPanelVisible = consoleEnabled;
 
         // In a real app, you'd likely resolve this via DI
         
@@ -176,10 +181,21 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _isBottomPanelCollapsed, value);
     }
 
+    private bool _isBottomPanelVisible = true;
+    public bool IsBottomPanelVisible
+    {
+        get => _isBottomPanelVisible;
+        set => this.RaiseAndSetIfChanged(ref _isBottomPanelVisible, value);
+    }
+    
     public void ToggleBottomPanel()
     {
         IsBottomPanelCollapsed = !IsBottomPanelCollapsed;
     }
+    
+    public GridLength ConsoleHeight => _configService.LoadConfig().ConsoleEnabled 
+        ? new GridLength(10) 
+        : new GridLength(0);
 
     public ReactiveCommand<PackageModel, Unit> TogglePackageCheckCommand { get; }
 
