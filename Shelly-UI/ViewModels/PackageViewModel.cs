@@ -73,7 +73,8 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel, IActivatableV
             LoadData();
         });
     }
-
+    
+    
     private async Task Sync()
     {
         try
@@ -103,14 +104,12 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel, IActivatableV
 
     private async void LoadData()
     {
-        var cachedPackages = await _appCache.GetAsync<List<PackageModel>?>(nameof(CacheEnums.PackageCache));
-
         try
         {
             await Task.Run(() => _alpmManager.Initialize());
             var packages = await Task.Run(() => _alpmManager.GetAvailablePackages());
 
-            var installed = await _appCache.GetAsync<List<AlpmPackageDto>?>(nameof(CacheEnums.InstalledCache));
+            var installed =  await Task.Run(() => _alpmManager.GetInstalledPackages());
             var installedNames = new HashSet<string>(installed?.Select(x => x.Name) ?? Enumerable.Empty<string>());
 
             var models = packages.Select(u => new PackageModel
@@ -129,7 +128,6 @@ public class PackageViewModel : ViewModelBase, IRoutableViewModel, IActivatableV
 
             RxApp.MainThreadScheduler.Schedule(() =>
             {
-                AvaliablePackages.Clear();
                 foreach (var model in models)
                 {
                     AvaliablePackages.Add(model);
