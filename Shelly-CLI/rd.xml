@@ -1,5 +1,7 @@
 <Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
   <Application>
+    <Assembly Name="Spectre.Console" Dynamic="Required All" />
+    <Assembly Name="Spectre.Console.Cli" Dynamic="Required All" />
     <Assembly Name="Shelly-CLI" Dynamic="Required All">
       <Type Name="Shelly_CLI.SyncSettings" Dynamic="Required All" />
       <Type Name="Shelly_CLI.SyncCommand" Dynamic="Required All" />
