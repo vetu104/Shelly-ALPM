@@ -29,4 +29,8 @@
         <ProjectReference Include="..\PackageManager\PackageManager.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <RdXmlFile Include="rd.xml" />
+    </ItemGroup>
+
 </Project>
