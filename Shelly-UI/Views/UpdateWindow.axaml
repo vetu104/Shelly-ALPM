@@ -64,7 +64,8 @@
                 AutoGenerateColumns="False"
                 IsReadOnly="True"
                 CanUserResizeColumns="True"
-                GridLinesVisibility="None">
+                GridLinesVisibility="None"
+                DoubleTapped="DataGrid_DoubleTapped">
                 <DataGrid.Columns>
                     <DataGridTextColumn
                         Header="{x:Static lang:Resources.Name}"

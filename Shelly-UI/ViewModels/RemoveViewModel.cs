@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using PackageManager.Alpm;
@@ -39,7 +40,8 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
 
         RemovePackagesCommand = ReactiveCommand.CreateFromTask(RemovePackages);
         RefreshCommand = ReactiveCommand.CreateFromTask(Refresh);
-
+        TogglePackageCheckCommand = ReactiveCommand.Create<PackageModel>(TogglePackageCheck);
+        
         LoadData();
     }
 
@@ -160,4 +162,13 @@ public class RemoveViewModel : ViewModelBase, IRoutableViewModel
         get => _searchText;
         set => this.RaiseAndSetIfChanged(ref _searchText, value);
     }
+    
+    private void TogglePackageCheck(PackageModel package)
+    {
+        package.IsChecked = !package.IsChecked;
+
+        Console.Error.WriteLine($"[DEBUG_LOG] Package {package.Name} checked state: {package.IsChecked}");
+    }
+    
+    public ReactiveCommand<PackageModel, Unit> TogglePackageCheckCommand { get; }
 }

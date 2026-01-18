@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using PackageManager.Alpm;
@@ -35,7 +36,8 @@ public class UpdateViewModel : ViewModelBase, IRoutableViewModel
 
         AlpmUpdateCommand = ReactiveCommand.CreateFromTask(AlpmUpdate);
         SyncCommand = ReactiveCommand.CreateFromTask(Sync);
-
+        TogglePackageCheckCommand = ReactiveCommand.Create<UpdateModel>(TogglePackageCheck);
+        
         LoadData();
     }
 
@@ -145,4 +147,13 @@ public class UpdateViewModel : ViewModelBase, IRoutableViewModel
     public string UrlPathSegment { get; } = Guid.NewGuid().ToString().Substring(0, 5);
 
     public ObservableCollection<UpdateModel> PackagesForUpdating { get; set; }
+    
+    private void TogglePackageCheck(UpdateModel package)
+    {
+        package.IsChecked = !package.IsChecked;
+
+        Console.Error.WriteLine($"[DEBUG_LOG] Package {package.Name} checked state: {package.IsChecked}");
+    }
+    
+    public ReactiveCommand<UpdateModel, Unit> TogglePackageCheckCommand { get; }
 }
