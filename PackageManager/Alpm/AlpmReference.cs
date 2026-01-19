@@ -25,10 +25,10 @@ namespace PackageManager.Alpm
         public static partial int SetEventCallback(IntPtr handle, AlpmEventCallback cb, IntPtr ctx);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int AlpmDownloadCallback(IntPtr ctx, IntPtr url, IntPtr localpath, int force);
+        public delegate int AlpmFetchCallback(IntPtr ctx, IntPtr url, IntPtr localpath, int force);
 
-        [LibraryImport(LibName, EntryPoint = "alpm_option_set_dlcb")]
-        public static partial int SetDownloadCallback(IntPtr handle, AlpmDownloadCallback cb, IntPtr ctx);
+        [LibraryImport(LibName, EntryPoint = "alpm_option_set_fetchcb")]
+        public static partial int SetFetchCallback(IntPtr handle, AlpmFetchCallback cb, IntPtr ctx);
 
         [LibraryImport(LibName, EntryPoint = "alpm_option_set_questioncb")]
         public static partial int SetQuestionCallback(IntPtr handle, AlpmQuestionCallback cb, IntPtr ctx);

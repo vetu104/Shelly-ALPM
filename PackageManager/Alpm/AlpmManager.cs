@@ -19,7 +19,7 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
     private PacmanConf _config;
     private IntPtr _handle = IntPtr.Zero;
     private static readonly HttpClient _httpClient = new();
-    private AlpmDownloadCallback _downloadCallback;
+    private AlpmFetchCallback _fetchCallback;
     private AlpmEventCallback _eventCallback;
     private AlpmQuestionCallback _questionCallback;
     private AlpmProgressCallback? _progressCallback;
@@ -137,8 +137,8 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
         }
 
         // Set up the download callback
-        _downloadCallback = DownloadFile;
-        if (SetDownloadCallback(_handle, _downloadCallback, IntPtr.Zero) != 0)
+        _fetchCallback = DownloadFile;
+        if (SetFetchCallback(_handle, _fetchCallback, IntPtr.Zero) != 0)
         {
             Console.Error.WriteLine("[ALPM_ERROR] Failed to set download callback");
         }
@@ -229,197 +229,82 @@ public class AlpmManager(string configPath = "/etc/pacman.conf") : IDisposable, 
         Marshal.StructureToPtr(question, questionPtr, false);
     }
 
-
     private int DownloadFile(IntPtr ctx, IntPtr urlPtr, IntPtr localpathPtr, int force)
     {
         try
         {
             string? url = Marshal.PtrToStringUTF8(urlPtr);
-            // Add safety check for localpathPtr
-            string? localpath = null;
+            string? localpathDir = null;
+
             if (localpathPtr != IntPtr.Zero)
             {
                 try
                 {
-                    localpath = Marshal.PtrToStringUTF8(localpathPtr);
+                    localpathDir = Marshal.PtrToStringUTF8(localpathPtr);
                 }
                 catch (Exception)
                 {
                     Console.Error.WriteLine("[DEBUG_LOG] localpathPtr points to invalid memory");
-                    localpath = null;
                 }
             }
 
             Console.Error.WriteLine(
-                $"[DEBUG_LOG] DownloadFile called with url='{url}', localpath='{localpath}', force={force}");
+                $"[DEBUG_LOG] DownloadFile called with url='{url}', localpath='{localpathDir}', force={force}");
 
-            // If libalpm provides no destination, we must provide one
-            if (string.IsNullOrEmpty(localpath) && !string.IsNullOrEmpty(url))
+            if (string.IsNullOrEmpty(url)) return -1;
+
+            // Extract filename from URL
+            string fileName;
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
             {
-                // For .db files, they usually go into DbPath
-                // For .pkg files, they go into CacheDir
-                string fileName = Path.GetFileName(url);
+                fileName = Path.GetFileName(uri.LocalPath);
+            }
+            else
+            {
+                fileName = Path.GetFileName(url);
+            }
+
+            // Construct full destination path
+            string localpath;
+            if (!string.IsNullOrEmpty(localpathDir))
+            {
+                // localpath from fetchcb is a DIRECTORY, combine with filename
+                localpath = Path.Combine(localpathDir, fileName);
+            }
+            else
+            {
+                // Fallback: determine directory based on file type
                 if (url.EndsWith(".db") || url.EndsWith(".db.sig"))
                 {
                     localpath = Path.Combine(_config.DbPath, "sync", fileName);
-                    //Console.WriteLine($"Using {localpath} as destination for {url}");
-                    Console.Error.WriteLine($"[DEBUG_LOG] Using {localpath} as destination for {url}");
                 }
                 else
                 {
                     localpath = Path.Combine(_config.CacheDir, fileName);
-                    //Console.WriteLine($"Using {localpath} as destination for {url}");
-                    Console.Error.WriteLine($"[DEBUG_LOG] Using {localpath} as destination for {url}");
                 }
             }
 
+            Console.Error.WriteLine($"[DEBUG_LOG] Full destination path: {localpath}");
+
             if (string.IsNullOrEmpty(localpath)) return -1;
 
-            if (File.Exists(localpath) && force == 0) return 0;
+            // Return 1 if file exists and is identical (no update needed)
+            if (File.Exists(localpath) && force == 0) return 1;
 
             var directory = Path.GetDirectoryName(localpath);
             if (directory != null) Directory.CreateDirectory(directory);
 
-            if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri))
-            {
-                Console.Error.WriteLine($"[DEBUG_LOG] Attempting download from {absoluteUri} to {localpath}");
-                return PerformDownload(absoluteUri.ToString(), localpath);
-            }
-
-            var syncDbsPtr = GetSyncDbs(_handle);
-            IntPtr targetDb = IntPtr.Zero;
-
-            // 1. Check if the URL is a database/sig file (e.g., "core.db", "core.db.sig")
-            var currentPtr = syncDbsPtr;
-            while (currentPtr != IntPtr.Zero)
-            {
-                var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
-                if (node.Data != IntPtr.Zero)
-                {
-                    var dbName = Marshal.PtrToStringUTF8(DbGetName(node.Data));
-                    Console.Error.WriteLine($"[DEBUG_LOG] Checking dbName: {dbName}");
-                    if (dbName != null && (url == $"{dbName}.db" || url == $"{dbName}.db.sig"))
-                    {
-                        targetDb = node.Data;
-                        break;
-                    }
-                }
-
-                currentPtr = node.Next;
-            }
-
-            if (targetDb != IntPtr.Zero)
-            {
-                var matchedDbName = Marshal.PtrToStringUTF8(DbGetName(targetDb));
-                Console.Error.WriteLine($"[DEBUG_LOG] Found targetDb: {matchedDbName} for url: {url}");
-            }
-            else
-            {
-                Console.Error.WriteLine($"[DEBUG_LOG] No targetDb found for url: {url}");
-            }
-
-            // 2. If it's a package, find which DB contains a package with this exact filename
-            if (targetDb == IntPtr.Zero)
-            {
-                currentPtr = syncDbsPtr;
-                while (currentPtr != IntPtr.Zero)
-                {
-                    var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
-                    if (node.Data != IntPtr.Zero)
-                    {
-                        var pkgCachePtr = DbGetPkgCache(node.Data);
-                        var pkgNodePtr = pkgCachePtr;
-
-                        while (pkgNodePtr != IntPtr.Zero)
-                        {
-                            var pkgNode = Marshal.PtrToStructure<AlpmList>(pkgNodePtr);
-                            // Get the actual filename for the package in this database
-                            var pkgFilenamePtr = GetPkgFileName(pkgNode.Data);
-                            var pkgFilename = Marshal.PtrToStringUTF8(pkgFilenamePtr);
-
-                            if (pkgFilename == url)
-                            {
-                                targetDb = node.Data;
-                                break;
-                            }
-
-                            pkgNodePtr = pkgNode.Next;
-                        }
-                    }
-
-                    if (targetDb != IntPtr.Zero) break;
-                    currentPtr = node.Next;
-                }
-            }
-
-            // 3. Iterate through databases, prioritizing the identified targetDb
-            currentPtr = syncDbsPtr;
-            while (currentPtr != IntPtr.Zero)
-            {
-                var node = Marshal.PtrToStructure<AlpmList>(currentPtr);
-                if (node.Data == IntPtr.Zero)
-                {
-                    currentPtr = node.Next;
-                    continue;
-                }
-
-                // If we found a specific DB, skip the others
-                if (targetDb != IntPtr.Zero && node.Data != targetDb)
-                {
-                    currentPtr = node.Next;
-                    continue;
-                }
-
-                var serversPtr = DbGetServers(node.Data);
-                Console.Error.WriteLine(
-                    $"[DEBUG_LOG] serversPtr for db: {(serversPtr == IntPtr.Zero ? "NULL" : "valid")}");
-                var serverNodePtr = serversPtr;
-                while (serverNodePtr != IntPtr.Zero)
-                {
-                    var serverNode = Marshal.PtrToStructure<AlpmList>(serverNodePtr);
-                    Console.Error.WriteLine($"[DEBUG_LOG] serverNode.Data: {serverNode.Data}");
-                    var serverBaseUrl = Marshal.PtrToStringUTF8(serverNode.Data);
-                    if (serverNode.Data == IntPtr.Zero)
-                    {
-                        Console.Error.WriteLine("[DEBUG_LOG] serverNode.Data is NULL - skipping");
-                        serverNodePtr = serverNode.Next;
-                        continue;
-                    }
-
-                    if (!string.IsNullOrEmpty(serverBaseUrl))
-                    {
-                        var fullUrl = serverBaseUrl.EndsWith('/') ? $"{serverBaseUrl}{url}" : $"{serverBaseUrl}/{url}";
-                        Console.Error.WriteLine($"[DEBUG_LOG] fullUrl: {fullUrl}");
-                        if (PerformDownload(fullUrl, localpath) == 0) return 0;
-                    }
-
-                    serverNodePtr = serverNode.Next;
-                }
-
-                if (targetDb != IntPtr.Zero) break;
-                currentPtr = node.Next;
-            }
-
-            return -1;
+            // URL should already be absolute from fetchcb
+            return PerformDownload(url, localpath);
         }
         catch (Exception ex)
         {
-            string urlString;
-            try
-            {
-                urlString = Marshal.PtrToStringUTF8(urlPtr) ?? "unknown url";
-            }
-            catch
-            {
-                urlString = "invalid pointer";
-            }
-
-            //Console.WriteLine($"Download logic failed for {urlString}: {ex.Message}");
-            Console.Error.WriteLine($"[DEBUG_LOG] Download logic failed for {urlString}: {ex.Message}");
-            Console.Error.WriteLine($"[DEBUG_LOG] Stack trace: {ex.StackTrace}"); // ADD THIS LINE
+            Console.Error.WriteLine($"[DEBUG_LOG] Download failed: {ex.Message}");
+            Console.Error.WriteLine($"[DEBUG_LOG] Stack trace: {ex.StackTrace}");
             return -1;
         }
     }
+
 
     private int PerformDownload(string fullUrl, string localpath)
     {
