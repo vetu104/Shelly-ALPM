@@ -35,7 +35,7 @@ Upcoming features and development targets:
 ### Using PKGBUILD
 
 Since Shelly is designed for Arch Linux, you can build and install it using the provided `PKGBUILD`:
-
+There is currently an issue with the package build and I suggest you run the local-install.sh after building it manually.
 ```bash
 git clone https://github.com/ZoeyErinBauer/Shelly-ALPM.git
 cd Shelly-ALPM
