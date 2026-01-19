@@ -11,8 +11,11 @@ namespace Shelly_UI.BaseClasses;
 public abstract class ConsoleEnabledViewModelBase : ViewModelBase
 {
     private readonly ConfigService _configService = new();
-    private readonly ObservableAsPropertyHelper<string> _fullLogText;
-    public string FullLogText => _fullLogText.Value;
+    
+    // Expose the collection directly for the custom control
+    public System.Collections.ObjectModel.ObservableCollection<string> Logs => 
+        ConsoleLogService.Instance.Logs;
+
 
     private bool _isBottomPanelCollapsed = true;
     public bool IsBottomPanelCollapsed
@@ -32,13 +35,6 @@ public abstract class ConsoleEnabledViewModelBase : ViewModelBase
     {
         var consoleEnabled = _configService.LoadConfig().ConsoleEnabled;
         _isBottomPanelVisible = consoleEnabled;
-
-        // Shared logic for the log stream
-        _fullLogText = consoleEnabled ? ConsoleLogService.Instance.Logs
-            .ToObservableChangeSet()
-            .QueryWhenChanged(items => string.Join(Environment.NewLine, items))
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .ToProperty(this, x => x.FullLogText) : Observable.Return(string.Empty).ToProperty(this, x => x.FullLogText);
     }
 
     public void ToggleBottomPanel()

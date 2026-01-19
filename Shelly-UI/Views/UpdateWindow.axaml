@@ -117,14 +117,7 @@
         <customControls:ConsoleSplitControl.BottomContent>
             <Grid IsVisible="{Binding !IsBottomPanelCollapsed}">
                 <ScrollViewer>
-                    <TextBox Text="{Binding FullLogText, Mode=OneWay}"
-                             IsReadOnly="True"
-                             AcceptsReturn="True"
-                             FontFamily="Consolas"
-                             FontSize="12"
-                             BorderThickness="0"
-                             TextWrapping="NoWrap"
-                             Background="Transparent"/>
+                <customControls:RichConsoleControl Logs="{Binding Logs}" />
                 </ScrollViewer>
             </Grid>
         </customControls:ConsoleSplitControl.BottomContent>
