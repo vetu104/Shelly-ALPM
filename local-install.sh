@@ -53,9 +53,9 @@ mkdir -p "$INSTALL_DIR"
 echo "Copying Shelly-UI files to $INSTALL_DIR"
 cp -r "$SCRIPT_DIR/publish/Shelly-UI/"* "$INSTALL_DIR/"
 
-# Copy Shelly-CLI binary
+# Copy Shelly-CLI binary (output is named 'shelly' due to AssemblyName)
 echo "Copying Shelly-CLI binary to $INSTALL_DIR"
-cp "$SCRIPT_DIR/publish/Shelly-CLI/Shelly-CLI" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/publish/Shelly-CLI/shelly" "$INSTALL_DIR/shelly"
 
 # Copy the logo
 echo "Copying logo..."
@@ -68,11 +68,11 @@ if [ -f "$INSTALL_DIR/Shelly-UI" ]; then
 fi
 
 # Ensure the CLI binary is executable and accessible in PATH
-if [ -f "$INSTALL_DIR/Shelly-CLI" ]; then
-    chmod +x "$INSTALL_DIR/Shelly-CLI"
+if [ -f "$INSTALL_DIR/shelly" ]; then
+    chmod +x "$INSTALL_DIR/shelly"
     echo "Made Shelly-CLI executable"
-    echo "Creating symlink for shelly-cli in /usr/local/bin"
-    ln -sf "$INSTALL_DIR/Shelly-CLI" /usr/local/bin/shelly-cli
+    echo "Creating symlink for shelly in /usr/local/bin"
+    ln -sf "$INSTALL_DIR/shelly" /usr/local/bin/shelly
 fi
 
 # Create desktop entry
@@ -98,6 +98,6 @@ echo "=========================================="
 echo ""
 echo "You can now:"
 echo "  - Run the GUI: $INSTALL_DIR/Shelly-UI"
-echo "  - Run the CLI: shelly-cli (or $INSTALL_DIR/Shelly-CLI)"
+echo "  - Run the CLI: shelly(or $INSTALL_DIR/Shelly)"
 echo "  - Find Shelly in your application menu"
 echo ""

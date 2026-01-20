@@ -13,7 +13,7 @@ public class DualOutputWriter : TextWriter
 {
     private readonly TextWriter _primary;
     private readonly TextWriter _stderr;
-    private const string ShellyCLIPrefix = "[Shelly-CLI]";
+    private const string ShellyPrefix = "[Shelly]";
     
     public DualOutputWriter(TextWriter primary, TextWriter stderr)
     {
@@ -25,7 +25,7 @@ public class DualOutputWriter : TextWriter
     {
         _primary.WriteLine(value);
         // Also write to stderr with prefix for UI capture
-        _stderr.WriteLine($"{ShellyCLIPrefix}{value}");
+        _stderr.WriteLine($"{ShellyPrefix}{value}");
     }
     
     public override void Write(string? value)
@@ -44,7 +44,7 @@ public class DualOutputWriter : TextWriter
 public class StderrPrefixWriter : TextWriter
 {
     private readonly TextWriter _stderr;
-    private const string ShellyCLIPrefix = "[Shelly-CLI]";
+    private const string ShellyPrefix = "[Shelly]";
     
     public StderrPrefixWriter(TextWriter stderr)
     {
@@ -53,7 +53,7 @@ public class StderrPrefixWriter : TextWriter
     
     public override void WriteLine(string? value)
     {
-        _stderr.WriteLine($"{ShellyCLIPrefix}{value}");
+        _stderr.WriteLine($"{ShellyPrefix}{value}");
     }
     
     public override void Write(string? value)
@@ -145,7 +145,7 @@ public class Program
         var app = new CommandApp();
         app.Configure(config =>
         {
-            config.SetApplicationName("shelly-cli");
+            config.SetApplicationName("shelly");
             config.SetApplicationVersion("1.0.0");
 
             config.AddCommand<SyncCommand>("sync")
@@ -421,7 +421,7 @@ public class InstallCommand : Command<PackageSettings>
             if (settings.NoConfirm)
             {
                 // Machine-readable format for UI integration
-                Console.Error.WriteLine($"[Shelly-CLI][ALPM_QUESTION]{args.QuestionText}");
+                Console.Error.WriteLine($"[Shelly][ALPM_QUESTION]{args.QuestionText}");
                 Console.Error.Flush();
                 var input = Console.ReadLine();
                 args.Response = input?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) == true ? 1 : 0;
@@ -487,7 +487,7 @@ public class RemoveCommand : Command<PackageSettings>
             if (settings.NoConfirm)
             {
                 // Machine-readable format for UI integration
-                Console.Error.WriteLine($"[Shelly-CLI][ALPM_QUESTION]{args.QuestionText}");
+                Console.Error.WriteLine($"[Shelly][ALPM_QUESTION]{args.QuestionText}");
                 Console.Error.Flush();
                 var input = Console.ReadLine();
                 args.Response = input?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) == true ? 1 : 0;
@@ -553,7 +553,7 @@ public class UpdateCommand : Command<PackageSettings>
             if (settings.NoConfirm)
             {
                 // Machine-readable format for UI integration
-                Console.Error.WriteLine($"[Shelly-CLI][ALPM_QUESTION]{args.QuestionText}");
+                Console.Error.WriteLine($"[Shelly][ALPM_QUESTION]{args.QuestionText}");
                 Console.Error.Flush();
                 var input = Console.ReadLine();
                 args.Response = input?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) == true ? 1 : 0;
@@ -618,7 +618,7 @@ public class UpgradeCommand : Command<UpgradeSettings>
             if (settings.NoConfirm)
             {
                 // Machine-readable format for UI integration
-                Console.Error.WriteLine($"[Shelly-CLI][ALPM_QUESTION]{args.QuestionText}");
+                Console.Error.WriteLine($"[Shelly][ALPM_QUESTION]{args.QuestionText}");
                 Console.Error.Flush();
                 var input = Console.ReadLine();
                 args.Response = input?.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) == true ? 1 : 0;

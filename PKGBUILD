@@ -34,7 +34,7 @@ package() {
   install -Dm755 out/libHarfBuzzSharp.so "$pkgdir/usr/bin/libHarfBuzzSharp.so"
   
   # Install Shelly-CLI binary
-  install -Dm755 out-cli/Shelly-CLI "$pkgdir/usr/bin/shelly-cli"
+  install -Dm755 out-cli/shelly "$pkgdir/usr/bin/shelly"
   
   # Install desktop entry
   echo "[Desktop Entry]

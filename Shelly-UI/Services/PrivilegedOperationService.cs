@@ -32,7 +32,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             throw new InvalidOperationException("HOME environment variable is not set.");
         }
         var debugPath =
-            Path.Combine(home!,"RiderProjects/Shelly-ALPM/Shelly-CLI/bin/Debug/net10.0/linux-x64/Shelly-CLI");
+            Path.Combine(home!,"RiderProjects/Shelly-ALPM/Shelly/bin/Debug/net10.0/linux-x64/Shelly");
         Console.Error.WriteLine($"Debug path: {debugPath}");
         #endif
         
@@ -42,12 +42,12 @@ public class PrivilegedOperationService : IPrivilegedOperationService
 #if DEBUG
             debugPath,
 #endif
-            "/usr/bin/shelly-cli",
-            "/usr/local/bin/shelly-cli",
-            Path.Combine(AppContext.BaseDirectory, "shelly-cli"),
-            Path.Combine(AppContext.BaseDirectory, "Shelly-CLI"),
+            "/usr/bin/shelly",
+            "/usr/local/bin/shelly",
+            Path.Combine(AppContext.BaseDirectory, "shelly"),
+            Path.Combine(AppContext.BaseDirectory, "Shelly"),
             // Development path - relative to UI executable
-            Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? "", "Shelly-CLI", "Shelly-CLI"),
+            Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory) ?? "", "Shelly", "Shelly"),
 
         };
 
@@ -60,7 +60,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
         }
 
         // Fallback to assuming it's in PATH
-        return "shelly-cli";
+        return "shelly";
     }
 
     public async Task<OperationResult> SyncDatabasesAsync()
@@ -157,11 +157,11 @@ public class PrivilegedOperationService : IPrivilegedOperationService
                 // Filter out the password prompt from sudo
                 if (!e.Data.Contains("[sudo]") && !e.Data.Contains("password for"))
                 {
-                    // Check for ALPM question (with Shelly-CLI prefix)
-                    if (e.Data.StartsWith("[Shelly-CLI][ALPM_QUESTION]"))
+                    // Check for ALPM question (with Shelly prefix)
+                    if (e.Data.StartsWith("[Shelly][ALPM_QUESTION]"))
                     {
-                        var questionText = e.Data.Substring("[Shelly-CLI][ALPM_QUESTION]".Length);
-                        Console.Error.WriteLine($"[Shelly-CLI]Question received: {questionText}");
+                        var questionText = e.Data.Substring("[Shelly][ALPM_QUESTION]".Length);
+                        Console.Error.WriteLine($"[Shelly]Question received: {questionText}");
                         
                         // Show dialog on UI thread and get response
                         var response = await Dispatcher.UIThread.InvokeAsync(async () =>

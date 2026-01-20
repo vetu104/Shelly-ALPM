@@ -13,6 +13,7 @@
 
     <PropertyGroup>
         <Version>1.2.0</Version>
+        <AssemblyName>shelly</AssemblyName>
         <AssemblyVersion>1.2.0</AssemblyVersion>
         <AssemblyTitle>Shelly CLI</AssemblyTitle>
         <Description>Shelly CLI is a arch linux package manager</Description>
