@@ -32,7 +32,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             throw new InvalidOperationException("HOME environment variable is not set.");
         }
         var debugPath =
-            Path.Combine(home!,"RiderProjects/Shelly-ALPM/Shelly/bin/Debug/net10.0/linux-x64/Shelly");
+            Path.Combine(home!,"RiderProjects/Shelly-ALPM/Shelly-CLI/bin/Debug/net10.0/linux-x64/shelly");
         Console.Error.WriteLine($"Debug path: {debugPath}");
         #endif
         
