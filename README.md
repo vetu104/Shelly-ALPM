@@ -68,8 +68,7 @@ Run the application from your terminal or application launcher:
 ```bash
 shelly-ui
 ```
-
-*Note: Shelly will relaunch itself as root using pkexec if not already running as root.*
+In it's install location or by opening it from your applications menu.
 
 ## Shelly-CLI
 
