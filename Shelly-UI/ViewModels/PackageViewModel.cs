@@ -56,7 +56,7 @@ public class PackageViewModel : ConsoleEnabledViewModelBase, IRoutableViewModel,
         TogglePackageCheckCommand = ReactiveCommand.Create<PackageModel>(TogglePackageCheck);
 
         // Load data when the view model is activated (navigated to)
-        this.WhenActivated((System.Reactive.Disposables.CompositeDisposable disposables) => { LoadData(); });
+        LoadData();
     }
 
 

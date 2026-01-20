@@ -3,12 +3,10 @@ using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using ReactiveUI;
 using Shelly_UI.Enums;
-using Shelly_UI.Models;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
 
@@ -144,8 +142,8 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
 
     public ReactiveCommand<Unit, Unit> CheckForUpdatesCommand { get; }
 
-    public bool IsUpdateCheckVisible => !AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") &&
-                                        !AppContext.BaseDirectory.StartsWith("/usr/share/Shelly") &&
+    public bool IsUpdateCheckVisible => !AppContext.BaseDirectory.StartsWith("/usr/share/bin/Shelly") ||
+                                        !AppContext.BaseDirectory.StartsWith("/usr/share/Shelly") ||
                                         !AppContext.BaseDirectory.StartsWith("/usr/bin/Shelly");
 
     private async Task CheckForUpdates()
