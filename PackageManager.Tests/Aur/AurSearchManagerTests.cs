@@ -22,6 +22,7 @@ public class AurSearchManagerTests
     public void TearDown()
     {
         _httpClient.Dispose();
+        _manager?.Dispose();
     }
 
     [Test]
