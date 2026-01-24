@@ -473,9 +473,8 @@ public class FlatpakManager
                 if (match != null)
                 {
                     // Build the ref string (format: app/org.example.App/x86_64/stable)
-                    string refString = $"app/{match.Id}/{match.Arch}/{match.Branch}";
-
-                    // Create a transaction for the update
+                    var refString = BuildRefString(match);
+                    
                     IntPtr transactionPtr = FlatpakReference.TransactionNewForInstallation(
                         installationPtr, IntPtr.Zero, out IntPtr transactionError);
 
@@ -486,21 +485,21 @@ public class FlatpakManager
 
                     try
                     {
-                        // Add the update operation to the transaction
-                        bool addSuccess = FlatpakReference.TransactionAddUpdate(
+                        var addSuccess = FlatpakReference.TransactionAddUpdate(
                             transactionPtr, refString, IntPtr.Zero, null, out IntPtr addError);
 
                         if (!addSuccess || addError != IntPtr.Zero)
                         {
-                            return $"Failed to add {nameOrId} to update queue. App may already be up to date.";
+                            var response = FlatpakReference.GetErrorMessage(addError);
+                            return $"Failed to add {nameOrId} to update queue. Error: {response} App may already be up to date.";
                         }
-
-                        // Run the transaction
-                        bool runSuccess = FlatpakReference.TransactionRun(
+                        
+                        var runSuccess = FlatpakReference.TransactionRun(
                             transactionPtr, IntPtr.Zero, out IntPtr runError);
 
                         if (!runSuccess || runError != IntPtr.Zero)
                         {
+                            
                             return $"Update of {nameOrId} failed. You may need elevated permissions.";
                         }
 
@@ -520,6 +519,64 @@ public class FlatpakManager
 
         return $"Could not find installed app matching '{nameOrId}'.";
     }
+     
+    public List<FlatpakPackageDto> GetPackagesWithUpdates()
+    {
+        var packages = new List<FlatpakPackageDto>();
+
+        IntPtr installationsPtr = FlatpakReference.GetSystemInstallations(IntPtr.Zero, out IntPtr error);
+
+        if (error != IntPtr.Zero || installationsPtr == IntPtr.Zero)
+        {
+            return packages;
+        }
+
+        try
+        {
+            IntPtr dataPtr = Marshal.ReadIntPtr(installationsPtr);
+            int length = Marshal.ReadInt32(installationsPtr + IntPtr.Size);
+
+            for (int i = 0; i < length; i++)
+            {
+                IntPtr installationPtr = Marshal.ReadIntPtr(dataPtr + i * IntPtr.Size);
+                if (installationPtr == IntPtr.Zero) continue;
+
+                // Get refs that have updates available
+                IntPtr refsPtr = FlatpakReference.InstanceGetUpdates(
+                    installationPtr, IntPtr.Zero, out IntPtr refsError);
+
+                if (refsError != IntPtr.Zero || refsPtr == IntPtr.Zero)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    IntPtr refsDataPtr = Marshal.ReadIntPtr(refsPtr);
+                    int refsLength = Marshal.ReadInt32(refsPtr + IntPtr.Size);
+
+                    for (int j = 0; j < refsLength; j++)
+                    {
+                        IntPtr refPtr = Marshal.ReadIntPtr(refsDataPtr + j * IntPtr.Size);
+                        if (refPtr == IntPtr.Zero) continue;
+
+                        var package = new FlatpackPackage(refPtr);
+                        packages.Add(package.ToDto());
+                    }
+                }
+                finally
+                {
+                    FlatpakReference.GPtrArrayUnref(refsPtr);
+                }
+            }
+        }
+        finally
+        {
+            FlatpakReference.GPtrArrayUnref(installationsPtr);
+        }
+
+        return packages;
+    }
 
     public async Task<FlatpakApiResponse> SearchFlathubAsync(
         string query,
@@ -528,8 +585,19 @@ public class FlatpakManager
         List<FlatpakHttpRequests.FlathubSearchFilter>? filters = null,
         CancellationToken ct = default)
     { 
-        return await new FlatpakHttpRequests().SearchAsync(query, page, limit, filters, ct);;
+        return await new FlatpakHttpRequests().SearchAsync(query, page, limit, filters, ct);
     }
+    
+    public async Task<string> SearchFlathubJsonAsync(
+        string query,
+        int page = 1,
+        int limit = 21,
+        List<FlatpakHttpRequests.FlathubSearchFilter>? filters = null,
+        CancellationToken ct = default)
+    { 
+        return await new FlatpakHttpRequests().SearchJsonAsync(query, page, limit, filters, ct);;
+    }
+
      
     /// <summary>
     /// Gets the current system architecture for flatpak refs.
@@ -549,6 +617,18 @@ public class FlatpakManager
     private static string PtrToStringSafe(IntPtr ptr)
     {
         return ptr == IntPtr.Zero ? string.Empty : Marshal.PtrToStringUTF8(ptr) ?? string.Empty;
+    }
+    
+    /// <summary>
+    /// Builds a Flatpak ref string based on the package kind.
+    /// </summary>
+    private static string BuildRefString(FlatpakPackageDto package)
+    {
+        var kindString = package.Kind == FlatpakReference.FlatpakRefKindApp 
+            ? "app" 
+            : "runtime";
+    
+        return $"{kindString}/{package.Id}/{package.Arch}/{package.Branch}";
     }
 }
 

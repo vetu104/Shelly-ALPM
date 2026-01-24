@@ -15,8 +15,11 @@ public class FlatpackPackage(IntPtr pkgPtr)
     public string Branch => PtrToStringSafe(FlatpakReference.RefGetBranch(pkgPtr));
     public string Name => PtrToStringSafe(FlatpakReference.InstalledRefGetAppDataName(pkgPtr)) is { Length: > 0 } name ? name : Id;
     public string Summary => PtrToStringSafe(FlatpakReference.InstalledRefGetAppDataSummary(pkgPtr));
+    public string LastCommit => PtrToStringSafe(FlatpakReference.InstalledGetLatestCommit(pkgPtr));
     public string Version => PtrToStringSafe(FlatpakReference.InstalledRefGetAppDataVersion(pkgPtr)) is { Length: > 0 } ver ? ver : Branch;
 
+    public int Kind => FlatpakReference.RefGetKind(pkgPtr);
+    
     private static string PtrToStringSafe(IntPtr ptr)
     {
         return ptr == IntPtr.Zero ? string.Empty : Marshal.PtrToStringUTF8(ptr) ?? string.Empty;
@@ -48,6 +51,8 @@ public class FlatpackPackage(IntPtr pkgPtr)
         Arch = Arch,
         Summary = Summary,
         Version = Version,
+        LatestCommit = LastCommit,
+        Kind = Kind
     };
 
     public override string ToString()

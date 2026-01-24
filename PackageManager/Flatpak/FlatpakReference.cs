@@ -16,19 +16,23 @@ internal static partial class FlatpakReference
 
     #region Installations
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_get_system_installations", StringMarshalling = StringMarshalling.Utf8)]
+    [LibraryImport(LibName, EntryPoint = "flatpak_get_system_installations",
+        StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr GetSystemInstallations(IntPtr cancellable, out IntPtr error);
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_installation_list_installed_refs", StringMarshalling = StringMarshalling.Utf8)]
-    public static partial IntPtr InstallationListInstalledRefs(IntPtr installation, IntPtr cancellable, out IntPtr error);
+    [LibraryImport(LibName, EntryPoint = "flatpak_installation_list_installed_refs",
+        StringMarshalling = StringMarshalling.Utf8)]
+    public static partial IntPtr InstallationListInstalledRefs(IntPtr installation, IntPtr cancellable,
+        out IntPtr error);
 
     #endregion
 
     #region Refs
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_remote_ref_get_remote_name", StringMarshalling = StringMarshalling.Utf8)]
+    [LibraryImport(LibName, EntryPoint = "flatpak_remote_ref_get_remote_name",
+        StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr RemoteRefGetRemoteName(IntPtr @ref);
-    
+
     [LibraryImport(LibName, EntryPoint = "flatpak_ref_get_name", StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr RefGetName(IntPtr @ref);
 
@@ -38,18 +42,22 @@ internal static partial class FlatpakReference
     [LibraryImport(LibName, EntryPoint = "flatpak_ref_get_branch", StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr RefGetBranch(IntPtr @ref);
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_appdata_name", StringMarshalling = StringMarshalling.Utf8)]
+    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_appdata_name",
+        StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr InstalledRefGetAppDataName(IntPtr @ref);
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_appdata_summary", StringMarshalling = StringMarshalling.Utf8)]
+    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_appdata_summary",
+        StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr InstalledRefGetAppDataSummary(IntPtr @ref);
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_appdata_version", StringMarshalling = StringMarshalling.Utf8)]
+    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_appdata_version",
+        StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr InstalledRefGetAppDataVersion(IntPtr @ref);
 
     [LibraryImport(LibName, EntryPoint = "flatpak_installation_launch", StringMarshalling = StringMarshalling.Utf8)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool InstallationLaunch(IntPtr installation, string name, string? arch, string? branch, string? commit, IntPtr cancellable, out IntPtr error);
+    public static partial bool InstallationLaunch(IntPtr installation, string name, string? arch, string? branch,
+        string? commit, IntPtr cancellable, out IntPtr error);
 
     [LibraryImport(LibName, EntryPoint = "flatpak_instance_get_child_pid", StringMarshalling = StringMarshalling.Utf8)]
     public static partial int InstanceGetChildPid(IntPtr instance);
@@ -64,6 +72,30 @@ internal static partial class FlatpakReference
     [LibraryImport(LibName, EntryPoint = "flatpak_instance_get_app", StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr InstanceGetApp(IntPtr instance);
 
+    [LibraryImport(LibName, EntryPoint = "flatpak_installation_list_installed_refs_for_update",
+        StringMarshalling = StringMarshalling.Utf8)]
+    public static partial IntPtr InstanceGetUpdates(IntPtr instance, IntPtr cancellable, out IntPtr error);
+
+    [LibraryImport(LibName, EntryPoint = "flatpak_installed_ref_get_latest_commit",
+        StringMarshalling = StringMarshalling.Utf8)]
+    public static partial IntPtr InstalledGetLatestCommit(IntPtr instance);
+
+    [LibraryImport(LibName, EntryPoint = "flatpak_ref_get_kind", StringMarshalling = StringMarshalling.Utf8)]
+    public static partial int RefGetKind(IntPtr instance);
+
+    [LibraryImport(LibName, EntryPoint = "flatpak_installation_launch_full",
+        StringMarshalling = StringMarshalling.Utf8)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool InstallationLaunchFull(IntPtr installation, FlatpakLaunchFlags flags, string name,
+        string? arch, string? branch, string? commit, out IntPtr instanceOut, IntPtr cancellable, out IntPtr error);
+
+    [Flags]
+    public enum FlatpakLaunchFlags : uint
+    {
+        None = 0,
+        FlatpakLaunchFlagsDoNotReap = 1
+    }
+
     #endregion
 
     #region GLib/GObject
@@ -74,11 +106,15 @@ internal static partial class FlatpakReference
     [LibraryImport(GLibName, EntryPoint = "g_ptr_array_unref")]
     public static partial void GPtrArrayUnref(IntPtr array);
 
+    [LibraryImport(GLibName, EntryPoint = "g_error_free")]
+    public static partial void GErrorFree(IntPtr error);
+
     #endregion
 
     #region Remotes
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_installation_list_remotes", StringMarshalling = StringMarshalling.Utf8)]
+    [LibraryImport(LibName, EntryPoint = "flatpak_installation_list_remotes",
+        StringMarshalling = StringMarshalling.Utf8)]
     public static partial IntPtr InstallationListRemotes(IntPtr installation, IntPtr cancellable, out IntPtr error);
 
     [LibraryImport(LibName, EntryPoint = "flatpak_remote_get_name", StringMarshalling = StringMarshalling.Utf8)]
@@ -88,28 +124,36 @@ internal static partial class FlatpakReference
 
     #region Transaction
 
-    [LibraryImport(LibName, EntryPoint = "flatpak_transaction_new_for_installation", StringMarshalling = StringMarshalling.Utf8)]
-    public static partial IntPtr TransactionNewForInstallation(IntPtr installation, IntPtr cancellable, out IntPtr error);
+    [LibraryImport(LibName, EntryPoint = "flatpak_transaction_new_for_installation",
+        StringMarshalling = StringMarshalling.Utf8)]
+    public static partial IntPtr TransactionNewForInstallation(IntPtr installation, IntPtr cancellable,
+        out IntPtr error);
 
     [LibraryImport(LibName, EntryPoint = "flatpak_transaction_add_install", StringMarshalling = StringMarshalling.Utf8)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool TransactionAddInstall(IntPtr transaction, string remote, string @ref, IntPtr subpaths, out IntPtr error);
-    
-    [LibraryImport(LibName, EntryPoint = "flatpak_transaction_add_uninstall", StringMarshalling = StringMarshalling.Utf8)]
+    public static partial bool TransactionAddInstall(IntPtr transaction, string remote, string @ref, IntPtr subpaths,
+        out IntPtr error);
+
+    [LibraryImport(LibName, EntryPoint = "flatpak_transaction_add_uninstall",
+        StringMarshalling = StringMarshalling.Utf8)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool TransactionAddUninstall(IntPtr transaction, string @ref, out IntPtr error);
 
     [LibraryImport(LibName, EntryPoint = "flatpak_transaction_add_update", StringMarshalling = StringMarshalling.Utf8)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool TransactionAddUpdate(IntPtr transaction, string @ref, IntPtr subpaths, string? commit, out IntPtr error);
+    public static partial bool TransactionAddUpdate(IntPtr transaction, string @ref, IntPtr subpaths, string? commit,
+        out IntPtr error);
 
-    
+
     [LibraryImport(LibName, EntryPoint = "flatpak_transaction_run", StringMarshalling = StringMarshalling.Utf8)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool TransactionRun(IntPtr transaction, IntPtr cancellable, out IntPtr error);
 
     #endregion
-    
+
+    public const int FlatpakRefKindApp = 0;
+    public const int FlatpakRefKindRuntime = 1;
+
     // This static constructor sets up the resolver
     static FlatpakReference()
     {
@@ -144,5 +188,27 @@ internal static partial class FlatpakReference
         }
 
         return IntPtr.Zero;
+    }
+
+    public static string GetErrorMessage(IntPtr errorPtr)
+    {
+        if (errorPtr == IntPtr.Zero)
+            return "Unknown error";
+
+        try
+        {
+            int offset = 8;
+            IntPtr messagePtr = Marshal.ReadIntPtr(errorPtr, offset);
+
+            if (messagePtr == IntPtr.Zero)
+                return "Error message is null";
+
+            string? message = Marshal.PtrToStringUTF8(messagePtr);
+            return message ?? "Unknown error";
+        }
+        catch (Exception ex)
+        {
+            return $"Failed to read error message: {ex.Message}";
+        }
     }
 }

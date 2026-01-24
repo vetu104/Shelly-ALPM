@@ -25,7 +25,7 @@ public class Flatpak
         [Description("Page number (1-based)")]
         [DefaultValue(1)]
         public int Page { get; init; } = 1;
-        
+
         [CommandOption("--no-ui")]
         [Description("Returns Raw json")]
         [DefaultValue(false)]
@@ -34,14 +34,13 @@ public class Flatpak
 
     public class FlatpakSetting : CommandSettings
     {
-        [CommandArgument(0, "<packages>")]
+        [CommandArgument(0, "<package>")]
         [Description("Package name to operate on")]
         public string Packages { get; set; } = string.Empty;
     }
 
     public class FlathubSearchCommand : Command<FlathubSearchSettings>
     {
-
         public override int Execute(CommandContext context, FlathubSearchSettings settings)
         {
             if (string.IsNullOrWhiteSpace(settings.Query))
@@ -52,13 +51,17 @@ public class Flatpak
 
             try
             {
+                var manager = new FlatpakManager();
                 if (settings.noUi)
                 {
-                    //TODO: Add logic to return raw json
+                    var results = manager.SearchFlathubJsonAsync(
+                            settings.Query, page: settings.Page,
+                            limit: settings.Limit, ct: CancellationToken.None)
+                        .GetAwaiter().GetResult();
+                    AnsiConsole.MarkupLine($"[grey]Response JSON:[/] {results.EscapeMarkup()}");
                 }
                 else
                 {
-                    var manager = new FlatpakManager();
                     var results = manager.SearchFlathubAsync(
                             settings.Query,
                             page: settings.Page,
@@ -177,6 +180,34 @@ public class Flatpak
             return 0;
         }
     }
+    
+    public class FlatpakListUpdatesCommand : Command
+    {
+        public override int Execute([NotNull] CommandContext context)
+        {
+            var manager = new FlatpakManager();
+
+            var packages = manager.GetPackagesWithUpdates();
+
+            var table = new Table();
+            table.AddColumn("Name");
+            table.AddColumn("Id");
+            table.AddColumn("Version");
+
+            foreach (var pkg in packages.OrderBy(p => p.Id))
+            {
+                table.AddRow(
+                    pkg.Name,
+                    pkg.Id,
+                    pkg.Version
+                );
+            }
+
+            AnsiConsole.Write(table);
+            AnsiConsole.MarkupLine($"[blue]Total: packages[/]");
+            return 0;
+        }
+    }
 
     public class FlatpakRunCommand : Command<FlatpakSetting>
     {
@@ -185,11 +216,12 @@ public class Flatpak
             AnsiConsole.MarkupLine("[yellow]Running selected flatpak app...[/]");
             var result = new FlatpakManager().LaunchApp(settings.Packages);
 
+            //AnsiConsole.MarkupLine("Result:" +result);
             if (result)
             {
                 AnsiConsole.MarkupLine("[green]App launched successfully[/]");
                 return 0;
-            }
+           }
 
             AnsiConsole.MarkupLine("[red]Failed to launch app[/]");
             return 1;

@@ -210,6 +210,9 @@ public class Program
                 flatpak.AddCommand<Flatpak.FlatpakListCommand>("list")
                     .WithDescription("List installed flatpak apps");
                 
+                flatpak.AddCommand<Flatpak.FlatpakListUpdatesCommand>("list-updates")
+                    .WithDescription("List installed flatpak apps");
+                
                 flatpak.AddCommand<Flatpak.FlatpakRunningCommand>("running")
                     .WithDescription("List running flatpak apps");
 

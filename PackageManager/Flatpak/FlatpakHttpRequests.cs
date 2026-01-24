@@ -55,6 +55,38 @@ public class FlatpakHttpRequests
         return root ?? new FlatpakApiResponse { hits = new List<Hit>() };
     }
     
+    public async Task<string> SearchJsonAsync(
+        string query,
+        int page = 1,
+        int limit = 21,
+        List<FlathubSearchFilter>? filters = null,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            throw new ArgumentException("Query cannot be empty.", nameof(query));
+
+        var payload = new FlathubSearchRequest
+        {
+            Query = query,
+            Page = page,
+            HitsPerPage = limit,
+            Filters = filters
+        };
+
+        var json = JsonSerializer.Serialize(payload, FlathubJsonContext.Default.FlathubSearchRequest);
+
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var response = await Http.PostAsync("api/v2/search", content);
+
+        var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}. Body: {body}");
+
+        return body;
+    }
+    
     public sealed class FlathubSearchRequest
     {
         [JsonPropertyName("query")]
