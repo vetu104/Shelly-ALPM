@@ -2,7 +2,7 @@
 pkgname=shelly-ui
 pkgver=1.0.3.alpha4
 pkgrel=1
-pkgdesc="Shelly is a visual arch linux package manager"
+pkgdesc="Shelly an alternative to pacman implemented on top of libalpm directly"
 arch=('x86_64')
 url="https://github.com/ZoeyErinBauer/Shelly-ALPM"
 license=('GPL-2.0-only')
@@ -19,8 +19,8 @@ prepare() {
 
 build() {
   cd "$srcdir/${pkgname}"
-  dotnet publish Shelly-UI/Shelly-UI.csproj -c Release -o out
-  dotnet publish Shelly-CLI/Shelly-CLI.csproj -c Release -o out-cli
+  dotnet publish Shelly-UI/Shelly-UI.csproj -c Release -o out --nologo -v q /p:WarningLevel=0
+  dotnet publish Shelly-CLI/Shelly-CLI.csproj -c Release -o out-cli --nologo -v q /p:WarningLevel=0
 }
 
 package() {
