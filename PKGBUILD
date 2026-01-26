@@ -2,7 +2,7 @@
 pkgname=shelly-ui
 pkgver=1.0.3.alpha4
 pkgrel=1
-pkgdesc="Shelly is a visual arch linux package manager"
+pkgdesc="Shelly an alternative to pacman implemented on top of libalpm directly"
 arch=('x86_64')
 url="https://github.com/ZoeyErinBauer/Shelly-ALPM"
 license=('GPL-2.0-only')
