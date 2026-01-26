@@ -19,8 +19,8 @@ prepare() {
 
 build() {
   cd "$srcdir/${pkgname}"
-  dotnet publish Shelly-UI/Shelly-UI.csproj -c Release -o out
-  dotnet publish Shelly-CLI/Shelly-CLI.csproj -c Release -o out-cli
+  dotnet publish Shelly-UI/Shelly-UI.csproj -c Release -o out --nologo -v q /p:WarningLevel=0
+  dotnet publish Shelly-CLI/Shelly-CLI.csproj -c Release -o out-cli --nologo -v q /p:WarningLevel=0
 }
 
 package() {
