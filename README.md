@@ -8,6 +8,15 @@ alternative to `pacman` and `octopi`. Unlike other Arch package managers, Shelly
 user experience and ease of use; It **IS NOT** built as a `pacman` wrapper or front-end. It is a complete reimagination of how a user
 interacts with their Arch Linux system, providing a more streamlined and intuitive experience.
 
+## Quick Install
+
+Install Shelly with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zoey-on-github/Shelly-ALPM/main/web-install.sh | sudo bash
+```
+
+This will download and install the latest release, including the UI and CLI tools.
 
 ## Features
 - **Modern-CLI**: Provides a command-line interface for advanced users and automation, with a focus on ease of use.
