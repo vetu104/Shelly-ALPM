@@ -99,3 +99,4 @@ fi
 
 echo "Installation complete!"
 echo "You can run Shelly with: shelly-ui"
+echo "You can run Shelly-CLI with: shelly"
