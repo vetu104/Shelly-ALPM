@@ -21,7 +21,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Fetching latest release from GitHub..."
-LATEST_URL=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep "browser_download_url.*$ASSET_NAME" | cut -d '"' -f 4)
+LATEST_URL=$(curl -fsSL "https://api.github.com/repos/ZoeyErinBauer/Shelly-ALPM/releases/latest" | grep "browser_download_url.*$ASSET_NAME" | cut -d '"' -f 4)
 
 if [ -z "$LATEST_URL" ]; then
     echo "Error: Could not find $ASSET_NAME in the latest release"
