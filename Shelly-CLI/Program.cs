@@ -1,3 +1,4 @@
+using System.Reflection;
 using Shelly_CLI.Commands;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -44,7 +45,7 @@ public class Program
         app.Configure(config =>
         {
             config.SetApplicationName("shelly");
-            config.SetApplicationVersion("1.2.4");
+            config.SetApplicationVersion(Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "unknown");
 
             config.AddCommand<VersionCommand>("version")
                 .WithDescription("Display the application version");
@@ -137,10 +138,10 @@ public class Program
 
                 flatpak.AddCommand<Flatpak.FlatpakListCommand>("list")
                     .WithDescription("List installed flatpak apps");
-                
+
                 flatpak.AddCommand<Flatpak.FlatpakListUpdatesCommand>("list-updates")
                     .WithDescription("List installed flatpak apps");
-                
+
                 flatpak.AddCommand<Flatpak.FlatpakRunningCommand>("running")
                     .WithDescription("List running flatpak apps");
 

@@ -61,10 +61,27 @@ if [ -f "$EXTRACT_DIR/shelly" ]; then
     install -Dm755 "$EXTRACT_DIR/shelly" /usr/bin/shelly
 fi
 
+REAL_USER=${SUDO_USER:-$USER}
+USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+
 # Install icon to standard location
 echo "Installing icon..."
 if [ -f "$EXTRACT_DIR/shellylogo.png" ]; then
     install -Dm644 "$EXTRACT_DIR/shellylogo.png" /usr/share/icons/hicolor/256x256/apps/shelly.png
+fi
+
+# Update icon cache so KDE and other DEs pick up the new icon
+echo "Updating icon cache..."
+if command -v gtk-update-icon-cache &> /dev/null; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+fi
+if command -v xdg-icon-resource &> /dev/null; then
+    xdg-icon-resource forceupdate 2>/dev/null || true
+fi
+if command -v kbuildsycoca5 &> /dev/null; then
+    sudo -u "$REAL_USER" kbuildsycoca5 2>/dev/null || true
+elif command -v kbuildsycoca6 &> /dev/null; then
+    sudo -u "$REAL_USER" kbuildsycoca6 2>/dev/null || true
 fi
 
 echo "Creating desktop entry"
@@ -77,9 +94,6 @@ Type=Application
 Categories=System;Utility;
 Terminal=false
 EOF
-
-REAL_USER=${SUDO_USER:-$USER}
-USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
 USER_DESKTOP="$USER_HOME/Desktop"
 
