@@ -87,8 +87,6 @@ public class AurPackageManager(string? configPath = null)
             if (installedPkg is null) continue;
             if (VersionComparer.IsNewer(pkg.Version, installedPkg.Version))
             {
-                Console.Error.WriteLine(
-                    $"New version of {pkg.Name} available: {pkg.Version} instead of : {installedPkg.Version}");
                 packagesToUpdate.Add(new AurUpdateDto
                 {
                     Name = pkg.Name,
