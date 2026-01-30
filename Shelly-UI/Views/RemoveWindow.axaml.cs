@@ -34,7 +34,7 @@ public partial class RemoveWindow : ReactiveUserControl<RemoveViewModel>
             _dataGrid = null;
         }
         
-        if (DataContext is PackageViewModel and IDisposable disposable)
+        if (DataContext is RemoveViewModel and IDisposable disposable)
         {
             disposable.Dispose();
         }

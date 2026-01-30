@@ -305,15 +305,13 @@ public class MainWindowViewModel : ViewModelBase, IScreen, IDisposable
                 }
             });
 
-        MessageBus.Current.Listen<SettingsChangedMessage>()
+        MessageBus.Current.Listen<AurEnableMessage>()
             .Subscribe(RefreshUi)
             .DisposeWith(Disposables);
     }
 
-    private void RefreshUi(SettingsChangedMessage msg)
+    private void RefreshUi(AurEnableMessage msg)
     {
-        if (!msg.AurChanged) return;
-
         IsAurEnabled = !IsAurEnabled;
         if (IsAurOpen)
         {

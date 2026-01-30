@@ -34,7 +34,7 @@ public partial class UpdateWindow : ReactiveUserControl<UpdateViewModel>
             _dataGrid = null;
         }
         
-        if (DataContext is PackageViewModel and IDisposable disposable)
+        if (DataContext is UpdateViewModel and IDisposable disposable)
         {
             disposable.Dispose();
         }

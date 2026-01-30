@@ -38,14 +38,13 @@ public abstract class ConsoleEnabledViewModelBase : ReactiveObject, IDisposable
         var consoleEnabled =  App.Services.GetRequiredService<IConfigService>().LoadConfig().ConsoleEnabled;
         _isBottomPanelVisible = consoleEnabled;
 
-        MessageBus.Current.Listen<SettingsChangedMessage>()
+        MessageBus.Current.Listen<ConsoleEnableMessage>()
             .Subscribe(RefreshUi)
             .DisposeWith(_disposables);
     }
 
-    private void RefreshUi(SettingsChangedMessage msg)
+    private void RefreshUi(ConsoleEnableMessage msg)
     {
-        if (!msg.ConsoleChanged) return;
         if (IsBottomPanelCollapsed)
         {
             IsBottomPanelCollapsed = false;
