@@ -132,7 +132,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             var lines = result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
             {
-                var trimmedLine = line.Trim();
+                var trimmedLine = StripBom(line.Trim());
                 if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
                 {
                     var updates = System.Text.Json.JsonSerializer.Deserialize(trimmedLine, ShellyUIJsonContext.Default.ListAlpmPackageUpdateDto);
@@ -141,7 +141,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             }
             
             // If no JSON array found, try parsing the whole output
-            var allUpdates = System.Text.Json.JsonSerializer.Deserialize(result.Output.Trim(), ShellyUIJsonContext.Default.ListAlpmPackageUpdateDto);
+            var allUpdates = System.Text.Json.JsonSerializer.Deserialize(StripBom(result.Output.Trim()), ShellyUIJsonContext.Default.ListAlpmPackageUpdateDto);
             return allUpdates ?? [];
         }
         catch (Exception ex)
@@ -166,7 +166,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             var lines = result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
             {
-                var trimmedLine = line.Trim();
+                var trimmedLine = StripBom(line.Trim());
                 if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
                 {
                     var packages = System.Text.Json.JsonSerializer.Deserialize(trimmedLine, ShellyUIJsonContext.Default.ListAlpmPackageDto);
@@ -175,7 +175,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             }
             
             // If no JSON array found, try parsing the whole output
-            var allPackages = System.Text.Json.JsonSerializer.Deserialize(result.Output.Trim(), ShellyUIJsonContext.Default.ListAlpmPackageDto);
+            var allPackages = System.Text.Json.JsonSerializer.Deserialize(StripBom(result.Output.Trim()), ShellyUIJsonContext.Default.ListAlpmPackageDto);
             return allPackages ?? [];
         }
         catch (Exception ex)
@@ -200,7 +200,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             var lines = result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
             {
-                var trimmedLine = line.Trim();
+                var trimmedLine = StripBom(line.Trim());
                 if (trimmedLine.StartsWith("[") && trimmedLine.EndsWith("]"))
                 {
                     var packages = System.Text.Json.JsonSerializer.Deserialize(trimmedLine, ShellyUIJsonContext.Default.ListAlpmPackageDto);
@@ -209,7 +209,7 @@ public class PrivilegedOperationService : IPrivilegedOperationService
             }
             
             // If no JSON array found, try parsing the whole output
-            var allPackages = System.Text.Json.JsonSerializer.Deserialize(result.Output.Trim(), ShellyUIJsonContext.Default.ListAlpmPackageDto);
+            var allPackages = System.Text.Json.JsonSerializer.Deserialize(StripBom(result.Output.Trim()), ShellyUIJsonContext.Default.ListAlpmPackageDto);
             return allPackages ?? [];
         }
         catch (Exception ex)
@@ -435,5 +435,17 @@ public class PrivilegedOperationService : IPrivilegedOperationService
                 ExitCode = -1
             };
         }
+    }
+
+    /// <summary>
+    /// Strips UTF-8 BOM (Byte Order Mark) from the beginning of a string if present.
+    /// </summary>
+    private static string StripBom(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+        
+        // UTF-8 BOM is 0xEF 0xBB 0xBF which appears as \uFEFF in .NET strings
+        return input.TrimStart('\uFEFF');
     }
 }
