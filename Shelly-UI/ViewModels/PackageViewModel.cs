@@ -15,10 +15,9 @@ using Shelly_UI.Services.AppCache;
 
 namespace Shelly_UI.ViewModels;
 
-public class PackageViewModel : ConsoleEnabledViewModelBase, IRoutableViewModel, IActivatableViewModel
+public class PackageViewModel : ConsoleEnabledViewModelBase, IRoutableViewModel
 {
     public IScreen HostScreen { get; }
-    public ViewModelActivator Activator { get; } = new ViewModelActivator();
     private readonly IPrivilegedOperationService _privilegedOperationService;
     private string? _searchText;
     
@@ -36,12 +35,9 @@ public class PackageViewModel : ConsoleEnabledViewModelBase, IRoutableViewModel,
         
         _privilegedOperationService = privilegedOperationService;
         _credentialManager = credentialManager;
-
-        // Always initialize ConsoleLogService to ensure stderr interception is active
-        // This is needed even when console is disabled so that logs from CLI are captured
+        
         var _ = ConsoleLogService.Instance;
-
-        // When search text changes, update the observable collection
+        
         this.WhenAnyValue(x => x.SearchText)
             .Throttle(TimeSpan.FromMilliseconds(250))
             .ObserveOn(RxApp.MainThreadScheduler)

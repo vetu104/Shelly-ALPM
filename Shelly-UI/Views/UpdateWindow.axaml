@@ -67,7 +67,7 @@
                     <DataGrid
                         Grid.Row="1"
                         Name="UpdateDataGrid"
-                        ItemsSource="{Binding FilteredPackages}"
+                        ItemsSource="{Binding PackagesForUpdating}"
                         AutoGenerateColumns="False"
                         IsReadOnly="True"
                         CanUserResizeColumns="True"

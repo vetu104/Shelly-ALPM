@@ -67,7 +67,7 @@
                     <DataGrid
                         Name = "AurUpdateDataGrid"
                         Grid.Row="1"
-                        ItemsSource="{Binding FilteredPackages}"
+                        ItemsSource="{Binding PackagesForUpdating}"
                         AutoGenerateColumns="False"
                         IsReadOnly="True"
                         CanUserResizeColumns="True"
