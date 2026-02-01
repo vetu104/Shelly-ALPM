@@ -68,8 +68,13 @@ public class UpgradeCommand : Command<UpgradeSettings>
 
         var table = new Table();
         table.AddColumn("Package");
-        table.AddColumn("Version");
-        table.AddColumn("Status");
+        table.AddColumn("Current Version");
+        table.AddColumn("New Version");
+        table.AddColumn("Download Size");
+        foreach (var pkg in packagesNeedingUpdate)
+        {
+            table.AddRow(pkg.Name, pkg.CurrentVersion, pkg.NewVersion, pkg.DownloadSize.ToString());
+        }
         AnsiConsole.Write(table);
         AnsiConsole.MarkupLine("[yellow] Starting System Upgrade...[/]");
         manager.SyncSystemUpdate();
