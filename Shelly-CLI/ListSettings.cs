@@ -14,4 +14,8 @@ public class ListSettings : DefaultSettings
     [Description("Sort order: ascending, descending (default: ascending")]
     [DefaultValue(SortDirection.Ascending)]
     public SortDirection Order { get; set; } = SortDirection.Ascending;
+    
+    [CommandOption("-f|--filter <FILTER>")]
+    [Description("Filter packages by name (case-insensitive substring match)")]
+    public string? Filter { get; set; }
 }

@@ -18,6 +18,12 @@ public class AurListInstalledCommand : AsyncCommand<ListSettings>
 
             var packages = await manager.GetInstalledPackages();
 
+            // Apply filter if specified
+            if (!string.IsNullOrWhiteSpace(settings.Filter))
+            {
+                packages = packages.Where(p => p.Name.Contains(settings.Filter, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             // Apply sorting based on settings
             // Note: Size sorts by name as there is no size data available for AUR packages
             var sortedPackages = settings.Sort switch

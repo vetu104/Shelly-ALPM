@@ -43,6 +43,12 @@ public class ListAvailableCommand : Command<ListSettings>
 
             var packages = manager.GetAvailablePackages();
 
+            // Apply filter if specified
+            if (!string.IsNullOrWhiteSpace(settings.Filter))
+            {
+                packages = packages.Where(p => p.Name.Contains(settings.Filter, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             // Apply sorting based on settings
             // Note: Popularity sorts by name as there is no popularity data available for standard packages
             var sortedPackages = settings.Sort switch

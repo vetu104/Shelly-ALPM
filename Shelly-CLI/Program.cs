@@ -65,14 +65,16 @@ public class Program
                 .WithExample("list-installed")
                 .WithExample("list-installed", "--sort", "name")
                 .WithExample("list-installed", "--sort", "size")
-                .WithExample("list-installed", "--sort", "size", "--order", "desc");
+                .WithExample("list-installed", "--sort", "size", "--order", "desc")
+                .WithExample("list-installed", "--filter", "linux");
 
             config.AddCommand<ListAvailableCommand>("list-available")
                 .WithDescription("List all available packages")
                 .WithExample("list-available")
                 .WithExample("list-available", "--sort", "name")
                 .WithExample("list-available", "--sort", "size")
-                .WithExample("list-available", "--sort", "size", "--order", "desc");
+                .WithExample("list-available", "--sort", "size", "--order", "desc")
+                .WithExample("list-available", "--filter", "firefox");
 
             config.AddCommand<ListUpdatesCommand>("list-updates")
                 .WithDescription("List packages that need updates")
@@ -153,14 +155,16 @@ public class Program
                     .WithExample("aur", "list-installed")
                     .WithExample("aur", "list-installed", "--sort", "name")
                     .WithExample("aur", "list-installed", "--sort", "popularity")
-                    .WithExample("aur", "list-installed", "--sort", "popularity", "--order", "desc");
+                    .WithExample("aur", "list-installed", "--sort", "popularity", "--order", "desc")
+                    .WithExample("aur", "list-installed", "--filter", "yay");
 
                 aur.AddCommand<AurListUpdatesCommand>("list-updates")
                     .WithDescription("List AUR packages that need updates")
                     .WithExample("aur", "list-updates")
                     .WithExample("aur", "list-updates", "--sort", "name")
                     .WithExample("aur", "list-updates", "--sort", "size")
-                    .WithExample("aur", "list-updates", "--sort", "size", "--order", "desc");
+                    .WithExample("aur", "list-updates", "--sort", "size", "--order", "desc")
+                    .WithExample("aur", "list-updates", "--filter", "paru");
 
                 aur.AddCommand<AurInstallCommand>("install")
                     .WithDescription("Install AUR packages")

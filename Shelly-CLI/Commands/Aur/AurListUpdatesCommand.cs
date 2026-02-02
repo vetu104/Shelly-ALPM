@@ -18,6 +18,12 @@ public class AurListUpdatesCommand : AsyncCommand<ListSettings>
 
             var updates = manager.GetPackagesNeedingUpdate().GetAwaiter().GetResult();
 
+            // Apply filter if specified
+            if (!string.IsNullOrWhiteSpace(settings.Filter))
+            {
+                updates = updates.Where(p => p.Name.Contains(settings.Filter, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
             // Apply sorting based on settings
             // Note: Popularity sorts by name as there is no popularity data available for AUR updates
             var sortedUpdates = settings.Sort switch
