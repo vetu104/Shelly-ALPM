@@ -154,7 +154,13 @@ public class Program
                     .WithDescription("Install AUR packages")
                     .WithExample("aur", "install", "yay")
                     .WithExample("aur", "install", "yay", "paru")
-                    .WithExample("aur", "install", "yay", "--no-confirm");
+                    .WithExample("aur", "install", "yay", "--no-confirm")
+                    .WithExample("aur", "install", "yay", "--build-deps")
+                    .WithExample("aur", "install", "yay", "-o")
+                    .WithExample("aur", "install", "yay", "--make-deps")
+                    .WithExample("aur", "install", "yay", "-m")
+                    .WithExample("aur", "install", "yay", "--build-deps", "--make-deps")
+                    .WithExample("aur", "install", "yay", "-o", "-m");
 
                 aur.AddCommand<AurInstallVersionCommand>("install-version")
                     .WithDescription("Install a specific version of an AUR package by commit hash")
