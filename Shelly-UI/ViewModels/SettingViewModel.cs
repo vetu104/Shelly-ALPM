@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reflection;
@@ -46,6 +47,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         _enableConsole = config.ConsoleEnabled;
         _enableAur = config.AurEnabled;
         _enableFlatpak = config.FlatPackEnabled;
+        _useKdeColor = config.UseKdeTheme;
 
         _ = SetUpdateText();
         _ = CheckAndEnableFlatpakAsync();
@@ -139,6 +141,26 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _showFlatpakDialog, value);
     }
 
+    private bool _useKdeColor;
+
+    public bool UseKdeColor
+    {
+        get => _useKdeColor;
+        set
+        {
+            var sessionDesktop = Environment.GetEnvironmentVariable("XDG_SESSION_DESKTOP");
+            if (sessionDesktop == "KDE")
+            {
+               // new ThemeService().ParseAndSetKdeTheme();
+                var config = _configService.LoadConfig();
+                config.UseKdeTheme = value;
+                _configService.SaveConfig(config);
+            }
+            this.RaiseAndSetIfChanged(ref _useKdeColor, value);
+        }
+    }
+ 
+
 
     public bool EnableFlatpak
     {
@@ -151,7 +173,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             if (value && !IsFlatbackToggleEnabled)
             {
                 ShowFlatpakDialog = true;
-                
+
                 Task.Run(async () =>
                 {
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
@@ -169,7 +191,6 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             var config = _configService.LoadConfig();
             config.FlatPackEnabled = value;
             _configService.SaveConfig(config);
-         
         }
     }
 
@@ -215,7 +236,8 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             var credManager = App.Services.GetService<ICredentialManager>();
             if (!credManager!.IsValidated)
             {
-                if (!await credManager.RequestCredentialsAsync("Install flatpak") || string.IsNullOrEmpty(credManager.GetPassword()))
+                if (!await credManager.RequestCredentialsAsync("Install flatpak") ||
+                    string.IsNullOrEmpty(credManager.GetPassword()))
                 {
                     ShowFlatpakDialog = false;
                     return false;
@@ -245,9 +267,9 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             ShowFlatpakDialog = false;
 
             if (!result.Success) return result.Success;
-            
+
             await CheckAndEnableFlatpakAsync();
-            
+
             await SetEnableFlatpakAsync(true);
 
             IsFlatbackToggleEnabled = true;
