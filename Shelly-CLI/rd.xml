@@ -54,6 +54,8 @@
             <Type Name="Shelly_CLI.Commands.Flatpak.FlatpakRunCommand" Dynamic="Required All"/>
             <Type Name="Shelly_CLI.Commands.Flatpak.FlatpakRunningCommand" Dynamic="Required All"/>
             <Type Name="Shelly_CLI.Commands.Flatpak.FlatpakKillCommand" Dynamic="Required All"/>
+            <Type Name="Shelly_CLI.Commands.Flatpak.FlatpakSyncRemoteAppStream" Dynamic="Required All"/>
+            <Type Name="Shelly_CLI.Commands.Flatpak.FlathubGetRemote" Dynamic="Required All"/>
         </Assembly>
     </Application>
 </Directives>
