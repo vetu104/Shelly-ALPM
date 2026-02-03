@@ -49,7 +49,11 @@ public class GitHubUpdateService : IUpdateService
             if (Version.TryParse(versionString, out var latestVersion))
             {
                 Console.Error.WriteLine($"[DEBUG] Current version: {currentVersion}, Latest version: {latestVersion}");
-                return latestVersion > currentVersion;
+                // Normalize both versions to 3 components (Major.Minor.Build) for comparison
+                // This avoids issues where 1.4.0 (Revision=-1) is incorrectly considered less than 1.4.0.0 (Revision=0)
+                var normalizedLatest = new Version(latestVersion.Major, latestVersion.Minor, Math.Max(0, latestVersion.Build));
+                var normalizedCurrent = new Version(currentVersion.Major, currentVersion.Minor, Math.Max(0, currentVersion.Build));
+                return normalizedLatest > normalizedCurrent;
             }
         }
         catch (Exception ex)

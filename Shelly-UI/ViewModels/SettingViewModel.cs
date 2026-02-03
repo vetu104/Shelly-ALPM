@@ -289,7 +289,11 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         }
 #endif
 
+        UpdateAvailableText = "Checking for updates...";
         bool updateAvailable = await _updateService.CheckForUpdateAsync();
+        await _appCache.StoreAsync(nameof(CacheEnums.UpdateAvailableCache), updateAvailable);
+        await SetUpdateText();
+        
         if (updateAvailable)
         {
             // Here you might want to show a dialog to the user
@@ -305,7 +309,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             : "No Update Available";
     }
 
-    private string _updateAvailable = "Checking for updates...";
+    private string _updateAvailable = "Check for update";
 
     public string UpdateAvailableText
     {
