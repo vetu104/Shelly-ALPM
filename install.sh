@@ -25,21 +25,21 @@ echo ""
 
 # Install Shelly-UI binary
 echo "Installing Shelly-UI to $INSTALL_DIR"
-install -Dm755 "$SCRIPT_DIR/Shelly-UI/Shelly-UI" "$INSTALL_DIR/shelly-ui"
+install -Dm755 "$SCRIPT_DIR/Shelly-UI" "$INSTALL_DIR/shelly-ui"
 
 # Install Shelly-CLI binary
 echo "Installing Shelly-CLI to $INSTALL_DIR"
-install -Dm755 "$SCRIPT_DIR/Shelly-CLI/shelly" "$INSTALL_DIR/shelly"
+install -Dm755 "$SCRIPT_DIR/shelly" "$INSTALL_DIR/shelly"
 
 # Install bundled native libraries
 echo "Installing native libraries..."
-install -Dm755 "$SCRIPT_DIR/Shelly-UI/libSkiaSharp.so" /usr/lib/libSkiaSharp.so
-install -Dm755 "$SCRIPT_DIR/Shelly-UI/libHarfBuzzSharp.so" /usr/lib/libHarfBuzzSharp.so
+install -Dm755 "$SCRIPT_DIR/libSkiaSharp.so" /usr/lib/libSkiaSharp.so
+install -Dm755 "$SCRIPT_DIR/libHarfBuzzSharp.so" /usr/lib/libHarfBuzzSharp.so
 
 # Install icon to standard location
 echo "Installing icon to standard location..."
 mkdir -p /usr/share/icons/hicolor/256x256/apps
-install -Dm644 "$SCRIPT_DIR/assets/shellylogo.png" /usr/share/icons/hicolor/256x256/apps/shelly.png
+install -Dm644 "$SCRIPT_DIR/shellylogo.png" /usr/share/icons/hicolor/256x256/apps/shelly.png
 
 # Create desktop entry
 echo "Creating desktop entry"
