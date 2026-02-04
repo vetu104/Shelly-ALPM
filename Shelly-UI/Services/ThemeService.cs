@@ -31,7 +31,7 @@ public class ThemeService
             }
         }
     }
-    
+
     public void ApplyLowChromeColor(Color accent)
     {
         var fluentTheme = Application.Current?.Styles.OfType<FluentTheme>().FirstOrDefault();
@@ -52,7 +52,7 @@ public class ThemeService
             }
         }
     }
-    
+
     public void ApplyAltHighColor(Color accent)
     {
         var fluentTheme = Application.Current?.Styles.OfType<FluentTheme>().FirstOrDefault();
@@ -61,6 +61,11 @@ public class ThemeService
             if (fluentTheme.Palettes.TryGetValue(ThemeVariant.Dark, out var currentDark) &&
                 currentDark is { } darkPalette)
             {
+                darkPalette.BaseHigh = accent;
+                darkPalette.BaseMedium = accent;
+                darkPalette.BaseMediumHigh= accent;
+                darkPalette.BaseLow = accent;
+                darkPalette.BaseMediumLow = accent;
                 darkPalette.AltHigh = accent;
                 fluentTheme.Palettes[ThemeVariant.Dark] = darkPalette;
             }
@@ -68,12 +73,17 @@ public class ThemeService
             if (fluentTheme.Palettes.TryGetValue(ThemeVariant.Light, out var currentLight) &&
                 currentLight is { } lightPalette)
             {
-                lightPalette.AltHigh = accent;
+                lightPalette.BaseHigh = accent;
+                lightPalette.BaseMedium = accent;
                 fluentTheme.Palettes[ThemeVariant.Light] = lightPalette;
             }
         }
+        
+        //
+        Application.Current.Resources["SystemControlForegroundBaseHighBrush"] =
+           accent;
     }
-    
+
     public void ApplySecondaryBackground(Color accent)
     {
         var fluentTheme = Application.Current?.Styles.OfType<FluentTheme>().FirstOrDefault();
@@ -95,37 +105,25 @@ public class ThemeService
         }
     }
 
-    private void ApplyKdeTheme()
+    public void ApplyKdeTheme()
     {
         var configPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".config",
             "kdeglobals"
         );
-    
+
         if (!File.Exists(configPath))
             return;
-    
+
         var content = File.ReadAllText(configPath);
         var parser = new KdeThemeParser();
         parser.Parse(content);
-    
-       
-    }
-    
-    private static Color ParseColor(string colorStr)
-    {
-        colorStr = colorStr.TrimStart('#');
-        
-        if (colorStr.Length == 6)
-        {
-            byte r = Convert.ToByte(colorStr.Substring(0, 2), 16);
-            byte g = Convert.ToByte(colorStr.Substring(2, 2), 16);
-            byte b = Convert.ToByte(colorStr.Substring(4, 2), 16);
-            return Color.FromRgb(r, g, b);
-        }
-        
-        return Color.FromRgb(0, 0, 0);
+
+        ApplyLowChromeColor(parser.BaseBackground);
+        ApplyCustomAccent(parser.Highlight);
+        ApplySecondaryBackground(parser.AlternateBase);
+        ApplyAltHighColor(parser.Text);
     }
 
     public void SetTheme(bool isDark)
@@ -139,81 +137,61 @@ public class ThemeService
 
 public class KdeThemeParser
 {
-    public Color WindowBackground { get; private set; }
-    public Color WindowForeground { get; private set; }
-    public Color ButtonBackground { get; private set; }
-    public Color BaseBackground { get; private set; }
-    public Color AlternateBase { get; private set; }
-    public Color Highlight { get; private set; }
-    public Color HighlightedText { get; private set; }
-    public Color Link { get; private set; }
-    public Color Text { get; private set; }
-    public Color ButtonText { get; private set; }
-    public Color DisabledText { get; private set; }
-    
+    public Color BaseBackground { get; set; }
+    public Color AlternateBase { get; set; }
+    public Color Highlight { get; set; }
+    public Color Text { get; set; }
+
+
     public void Parse(string configContent)
     {
-        var lines = configContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        
-        Color[] paletteActive = null;
-        Color[] paletteDisabled = null;
-        
+        List<Color> colors = [];
+
+
+        var lines = configContent.Trim().Split('\n')
+            .Select(line => line.Trim())
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToList();
+
+        // Parse section header
+        var inWindowSection = false;
+
+        // Parse color entries
         foreach (var line in lines)
         {
-            var trimmed = line.Trim();
-            
-            if (trimmed.StartsWith("Palette\\active="))
+            // Check if we're entering the Colors:Window section
+            if (line == "[Colors:Window]")
             {
-                var value = trimmed.Split(new[] { '=' }, 2)[1].Trim();
-                paletteActive = value.Split(',').Select(s => ParseColor(s.Trim())).ToArray();
+                inWindowSection = true;
+                continue;
             }
-            else if (trimmed.StartsWith("Palette\\disabled="))
+
+            // Check if we're entering a different section
+            if (line.StartsWith("[") && line.EndsWith("]"))
             {
-                var value = trimmed.Split(new[] { '=' }, 2)[1].Trim();
-                paletteDisabled = value.Split(',').Select(s => ParseColor(s.Trim())).ToArray();
+                inWindowSection = false;
+                continue;
+            }
+
+            if (inWindowSection && line.Contains("="))
+            {
+                var parts = line.Split('=');
+                var name = parts[0].Trim();
+                var rgbValues = parts[1].Split(',')
+                    .Select(v => int.Parse(v.Trim()))
+                    .ToArray();
+
+                colors.Add(Color.FromRgb(Convert.ToByte(rgbValues[0]), Convert.ToByte(rgbValues[1]),
+                    Convert.ToByte(rgbValues[2])));
             }
         }
-        
-        // Extract specific colors from palette
-        if (paletteActive != null && paletteActive.Length >= 22)
+
+        if (colors.Count > 0)
         {
-            Text = paletteActive[6];              // Text color
-            ButtonBackground = paletteActive[1];   // Button background
-            ButtonText = paletteActive[8];         // Button text
-            BaseBackground = paletteActive[9];     // Base/input background
-            WindowBackground = paletteActive[10];  // Window background
-            Highlight = paletteActive[12];         // Selection/highlight
-            HighlightedText = paletteActive[13];   // Selected text
-            Link = paletteActive[14];              // Link color
-            AlternateBase = paletteActive[16];     // Alternate row color
+            BaseBackground = colors[1];
+            AlternateBase = colors[0];
+            Highlight = colors[2];
+            Text = colors[9];
         }
-        
-        if (paletteDisabled != null && paletteDisabled.Length >= 7)
-        {
-            DisabledText = paletteDisabled[6];     // Disabled text color
-        }
-        
-        // Fallback to defaults if palette parsing failed
-        if (paletteActive == null)
-        {
-            WindowBackground = Color.FromRgb(239, 240, 241);
-            Text = Color.FromRgb(35, 38, 41);
-            Highlight = Color.FromRgb(61, 174, 233);
-        }
-    }
-    
-    private static Color ParseColor(string colorStr)
-    {
-        colorStr = colorStr.TrimStart('#');
-        
-        if (colorStr.Length == 6)
-        {
-            byte r = Convert.ToByte(colorStr.Substring(0, 2), 16);
-            byte g = Convert.ToByte(colorStr.Substring(2, 2), 16);
-            byte b = Convert.ToByte(colorStr.Substring(4, 2), 16);
-            return Color.FromRgb(r, g, b);
-        }
-        
-        return Color.FromRgb(0, 0, 0);
     }
 }

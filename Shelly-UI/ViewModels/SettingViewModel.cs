@@ -151,7 +151,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             var sessionDesktop = Environment.GetEnvironmentVariable("XDG_SESSION_DESKTOP");
             if (sessionDesktop == "KDE")
             {
-               // new ThemeService().ParseAndSetKdeTheme();
+                new ThemeService().ApplyKdeTheme();
                 var config = _configService.LoadConfig();
                 config.UseKdeTheme = value;
                 _configService.SaveConfig(config);
