@@ -6,7 +6,7 @@ pkgrel=1
 pkgdesc="Shelly: A Modern Arch Package Manager"
 arch=('x86_64')
 url="https://github.com/ZoeyErinBauer/Shelly-ALPM"
-license=('GPL-2.0-only')
+license=('GPL-3.0-only')
 depends=('pacman')
 makedepends=('dotnet-sdk-10.0')
 

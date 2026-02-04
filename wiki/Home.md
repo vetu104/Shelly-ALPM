@@ -42,4 +42,4 @@ See the [User Guide](UserGuide.md) for detailed instructions on using Shelly.
 
 ## License
 
-This project is licensed under the GPL-2.0 License.
+This project is licensed under the GPL-3.0 License.
