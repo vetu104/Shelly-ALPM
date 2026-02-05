@@ -164,36 +164,58 @@ public class GitHubUpdateService : IUpdateService
             return;
         }
 
-        var process = new Process
+        // Run install script in a terminal window so user can see progress
+        var terminalEmulators = new[]
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "pkexec",
-                Arguments = $"bash \"{installScript}\"",
-                WorkingDirectory = extractPath,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            }
+            ("konsole", $"--hold -e pkexec bash \"{installScript}\""),
+            ("gnome-terminal", $"-- pkexec bash \"{installScript}\""),
+            ("xfce4-terminal", $"--hold -e \"pkexec bash \\\"{installScript}\\\"\""),
+            ("xterm", $"-hold -e pkexec bash \"{installScript}\""),
+            ("alacritty", $"--hold -e pkexec bash \"{installScript}\""),
+            ("kitty", $"--hold pkexec bash \"{installScript}\"")
         };
 
-        process.Start();
+        Process? process = null;
+        foreach (var (terminal, args) in terminalEmulators)
+        {
+            try
+            {
+                process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = terminal,
+                        Arguments = args,
+                        WorkingDirectory = extractPath,
+                        UseShellExecute = false,
+                        CreateNoWindow = false
+                    }
+                };
+                process.Start();
+                break;
+            }
+            catch
+            {
+                // Terminal not found, try next
+                process = null;
+            }
+        }
 
-        var outputTask = process.StandardOutput.ReadToEndAsync();
-        var errorTask = process.StandardError.ReadToEndAsync();
+        if (process == null)
+        {
+            throw new Exception("No supported terminal emulator found. Please install konsole, gnome-terminal, xfce4-terminal, xterm, alacritty, or kitty.");
+        }
 
         await process.WaitForExitAsync();
 
         if (process.ExitCode != 0)
         {
-            var error = await errorTask;
-            if (process.ExitCode == 126 || process.ExitCode == 127) // common pkexec exit codes for cancel/fail
+            if (process.ExitCode == 126 || process.ExitCode == 127)
             {
                 throw new Exception("Installation cancelled or authentication failed.");
             }
 
-            throw new Exception($"Installation script failed: {error}");
+            throw new Exception($"Installation script failed with exit code: {process.ExitCode}");
         }
 
         Console.WriteLine("Update installed successfully. Please restart the application.");
