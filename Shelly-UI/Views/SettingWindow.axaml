@@ -14,16 +14,19 @@
         <TabControl Grid.Row="0"
             Margin="0 16"
             TabStripPlacement="Top">
-            <TabItem Header="App Settings">
+            <TabItem Header="App Settings" Foreground="{DynamicResource SystemBaseHighColor}">
                 <StackPanel Orientation="Vertical" Spacing="8">
                     <ToggleSwitch Content="Enable Console"
-                                  IsChecked="{Binding EnableConsole, Mode=TwoWay}" />
+                                  IsChecked="{Binding EnableConsole, Mode=TwoWay}"
+                                  Foreground="{DynamicResource SystemBaseHighColor}" />
                     <ToggleSwitch Content="Enable AUR (Beta)"
-                                  IsChecked="{Binding EnableAur, Mode=TwoWay}">
+                                  IsChecked="{Binding EnableAur, Mode=TwoWay}"
+                                  Foreground="{DynamicResource SystemBaseHighColor}">
                     </ToggleSwitch>
                     <ToggleSwitch Content="Enable FlatPack (Alpha)"
                                   IsChecked="{Binding EnableFlatpak, Mode=TwoWay}"
-                                  PointerPressed="OnFlatpakPointerPressed">
+                                  PointerPressed="OnFlatpakPointerPressed"
+                                  Foreground="{DynamicResource SystemBaseHighColor}">
                     </ToggleSwitch>
                     <Button Content="{x:Static lang:Resources.ForceSync}"
                             Command="{Binding ForceSyncUpdateCommand}"
@@ -43,9 +46,9 @@
                             Width="250"/>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Appearance">
+            <TabItem Header="Appearance" Foreground="{DynamicResource SystemBaseHighColor}">
                 <StackPanel Orientation="Vertical" Spacing="8" Margin="0,10">
-                    <TextBlock Text="{x:Static lang:Resources.AccentHexColor}" FontSize="14"/>
+                    <TextBlock Text="{x:Static lang:Resources.AccentHexColor}" FontSize="14" Foreground="{DynamicResource SystemBaseHighColor}"/>
                     <Grid ColumnDefinitions="*, Auto" HorizontalAlignment="Left">
                         <ColorPicker Grid.Column="0" Color="{Binding AccentHex, Mode=TwoWay}" />
                         <Button Grid.Column="1" Content="{x:Static lang:Resources.ApplyAccent}"
@@ -58,17 +61,19 @@
                                 Foreground="{DynamicResource SystemBaseHighColor}" />
                     </Grid>
                     <ToggleSwitch Content="Toggle Dark/Light Mode"
-                                  IsChecked="{Binding IsDarkMode, Mode=TwoWay}" />
+                                  IsChecked="{Binding IsDarkMode, Mode=TwoWay}"/>
                     <TextBlock Text="Default Page on startup" FontSize="14"  />
                     <ComboBox
                         ItemsSource="{Binding DefaultViews}"
                         SelectedItem="{Binding DefaultScreenEnum}"
                         Width="200" />
+                    <ToggleSwitch Content="Use KDE Color Scheme"
+                                                               IsChecked="{Binding UseKdeColor, Mode=TwoWay}" />
                 </StackPanel>
             </TabItem>
         </TabControl>
         <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
-            <TextBlock Text="{Binding AppVersion}" Opacity=".7" HorizontalAlignment="Right" Padding="10, 0"/>
+            <TextBlock Text="{Binding AppVersion}" Opacity=".7" HorizontalAlignment="Right" Padding="10, 0" Foreground="{DynamicResource SystemBaseHighColor}"/>
             <Button
                 Padding="0"
                 Click="OpenUrlCrossPlatform"
@@ -77,7 +82,7 @@
                     <avalonia:MaterialIcon Kind="CoffeeToGo" HorizontalAlignment="Right" Foreground="{DynamicResource SystemBaseHighColor}"
                                            Width="20"
                                            Height="20" />
-                    <TextBlock Grid.Column="1" Text="Buy me a coffee" Opacity=".7" Padding="10, 0"></TextBlock>
+                    <TextBlock Grid.Column="1" Text="Buy me a coffee" Opacity=".7" Padding="10, 0" Foreground="{DynamicResource SystemBaseHighColor}"></TextBlock>
                 </Grid>
             </Button>
         </StackPanel>
@@ -95,9 +100,9 @@
                     BoxShadow="0 10 30 0 #A0000000">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Enabling requires flatpak" FontWeight="Bold" FontSize="18"
-                               HorizontalAlignment="Center" />
+                               HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                     <TextBlock Text="Press confirm to install now or please install yourself" TextWrapping="Wrap"
-                               HorizontalAlignment="Center" TextAlignment="Center" />
+                               HorizontalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                     <Grid ColumnDefinitions="*,*">
                         <Button Grid.Column="0" Content="{x:Static lang:Resources.Cancel}"
                                 HorizontalAlignment="Stretch" Margin="0,0,5,0"
@@ -124,9 +129,9 @@
                     BoxShadow="0 10 30 0 #A0000000">
                 <StackPanel Spacing="15">
                     <TextBlock Text="AUR Warning" FontWeight="UltraBold" FontSize="18"
-                               HorizontalAlignment="Center" />
+                               HorizontalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                     <TextBlock Text="AUR packages are user-submitted and not officially supported. Use at your own risk." TextWrapping="Wrap"
-                               HorizontalAlignment="Center" FontWeight="ExtraBold" TextAlignment="Center" />
+                               HorizontalAlignment="Center" FontWeight="ExtraBold" TextAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                     <Grid ColumnDefinitions="*,*">
                         <Button Grid.Column="0" Content="{x:Static lang:Resources.Cancel}"
                                 HorizontalAlignment="Stretch" Margin="0,0,5,0"
