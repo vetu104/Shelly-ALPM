@@ -23,7 +23,7 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
 
     private string? _searchText;
 
-    private Database _db = new Database();
+   private readonly IDatabaseService _databaseService;
     public ObservableCollection<FlatpakModel> Flatpaks { get; set; } = new();
     private int _currentPage = 0;
     private bool _isLoading = false;
@@ -38,7 +38,8 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
         HostScreen = screen;
 
         _unprivilegedOperationService = App.Services.GetRequiredService<IUnprivilegedOperationService>();
-
+        _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+        
         LoadInitialDataCommand = ReactiveCommand.CreateFromTask(LoadInitialDataAsync);
         LoadMoreCommand = ReactiveCommand.CreateFromTask(LoadMoreAsync);
         SearchCommand = ReactiveCommand.CreateFromTask(PerformSearchAsync);
@@ -50,12 +51,11 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
             .Throttle(TimeSpan.FromMilliseconds(250))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ => PerformSearchAsync());
-        
-        if (!_db.CollectionExists("flatpaks"))
-        {
-            Refresh();
-            LoadingData = true;
-        }
+
+        if (_databaseService.CollectionExists<FlatpakModel>("flatpaks")) return;
+        Refresh();
+        _databaseService.EnsureIndex<FlatpakModel>("collectionName", x => x.Name, x => x.Categories);
+        LoadingData = true;
         //LoadData();
     }
 
@@ -80,7 +80,7 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
                     ? "App"
                     : "Runtime",
             }).ToList();
-            await new Database().AddToDatabase(models.ToList());
+            await new DatabaseService().AddToDatabase(models.ToList(),"flatpaks");
         }
         catch (Exception e)
         {
@@ -99,8 +99,7 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
         Flatpaks.Clear();
         _currentPage = 0;
 
-        var category = CategoryEnum != Enums.FlatpakCategories.None ? CategoryEnum.ToString() : null;
-        var items = await Task.Run(() => _db.GetNextPage(_currentPage, SearchText, category));
+        var items = GetNextPage(CategoryEnum != Enums.FlatpakCategories.None ? CategoryEnum.ToString() : null);
 
         foreach (var item in items)
         {
@@ -113,8 +112,7 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
         Flatpaks.Clear();
         _currentPage = 0;
 
-        var category = CategoryEnum != Enums.FlatpakCategories.None ? CategoryEnum.ToString() : null;
-        var items = await Task.Run(() => _db.GetNextPage(_currentPage, SearchText, category));
+        var items = GetNextPage(CategoryEnum != Enums.FlatpakCategories.None ? CategoryEnum.ToString() : null);
 
         foreach (var item in items)
         {
@@ -130,9 +128,8 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
         _currentPage++;
         try
         {
-            var category = CategoryEnum != Enums.FlatpakCategories.None ? CategoryEnum.ToString() : null;
-            var items = await Task.Run(() => _db.GetNextPage(_currentPage, SearchText, category));
-          
+            var items = GetNextPage(CategoryEnum != Enums.FlatpakCategories.None ? CategoryEnum.ToString() : null);
+
             if (items.Count != 0)
             {
                 foreach (var item in items)
@@ -146,6 +143,18 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
             _isLoading = false;
         }
     }
+
+    private List<FlatpakModel> GetNextPage(string? category) => _databaseService.GetNextPage<FlatpakModel, string>(
+        "flatpaks",
+        _currentPage,
+        20,
+        x => x.Name,
+        x => (string.IsNullOrWhiteSpace(SearchText) ||
+              x.Name.Contains(SearchText) ||
+              x.Summary.Contains(SearchText)) &&
+             (string.IsNullOrWhiteSpace(category) ||
+              x.Categories.Contains(category))
+    );
 
     public IEnumerable<FlatpakCategories> FlatpakCategories { get; } =
         Enum.GetValues<FlatpakCategories>();
@@ -223,7 +232,6 @@ public class FlatpakInstallViewModel : ConsoleEnabledViewModelBase, IRoutableVie
         {
             AvailablePackages?.Clear();
             Flatpaks?.Clear();
-            _db = new Database();
         }
 
         base.Dispose(disposing);
