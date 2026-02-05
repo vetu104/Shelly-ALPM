@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
 using Shelly_UI.Services;
 using Shelly_UI.Services.AppCache;
+using Shelly_UI.Services.LocalDatabase;
 using Shelly_UI.ViewModels;
 using Shelly_UI.Views;
 
@@ -35,6 +36,7 @@ public partial class App : Application
         collection.AddSingleton<ICredentialManager, CredentialManager>();
         collection.AddSingleton<IPrivilegedOperationService, PrivilegedOperationService>();
         collection.AddSingleton<IUnprivilegedOperationService, UnprivilegedOperationService>();
+        collection.AddSingleton<IDatabaseService, DatabaseService>();
         collection.AddSingleton<ThemeService>();
 
         // Creates a ServiceProvider containing services from the provided IServiceCollection

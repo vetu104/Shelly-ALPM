@@ -1,10 +1,7 @@
 ﻿using Avalonia;
 using ReactiveUI.Avalonia;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using PackageManager.User;
 using Shelly_UI.Enums;
 using Shelly.Utilities.System;
 
@@ -21,7 +18,7 @@ sealed class Program
     public static void Main(string[] args)
     {
         Console.WriteLine($"Running with user path {EnvironmentManager.UserPath}");
-        var logPath = Path.Combine(EnvironmentManager.UserPath, "Documents", "Shelly");
+        var logPath = Path.Combine(EnvironmentManager.UserPath, ".config", "shelly", "logs");
         Directory.CreateDirectory(logPath);
         var logWriter = new LogTextWriter(Console.Error, logPath);
         Console.SetError(logWriter);
@@ -50,31 +47,30 @@ sealed class Program
             Console.Error.WriteLine("Shelly-UI is exclusively for Arch Linux.");
             return;
         }
-        
+
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
 
-
     // Avalonia configuration, don't remove; also used by visual designer.
-    public static AppBuilder BuildAvaloniaApp()
+    private static AppBuilder BuildAvaloniaApp()
     {
-
-        var builder = AppBuilder.Configure<App>()
+        return AppBuilder.Configure<App>()
             .WithInterFont()
             .LogToTrace()
-            .UseReactiveUI();
-
-        var sessionType = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE");
-        if (sessionType == "wayland")
-        {
-            // Force Wayland backend, no X11 fallback
-            return builder
-                .UseSkia()
-                .With(new AvaloniaNativePlatformOptions())
-                .UsePlatformDetect(); // Will now prefer Wayland
-        }
-    
-        return builder.UsePlatformDetect();
+            .UseReactiveUI()
+            .With(new X11PlatformOptions()
+            {
+                //This option should allow for native scaling support
+                EnableIme = true,
+                EnableMultiTouch = true,
+                UseDBusMenu = true,
+                UseDBusFilePicker = true,
+                RenderingMode =
+                [
+                    X11RenderingMode.Vulkan, X11RenderingMode.Egl, X11RenderingMode.Glx, X11RenderingMode.Software
+                ],
+            })
+            .UsePlatformDetect();
     }
 }

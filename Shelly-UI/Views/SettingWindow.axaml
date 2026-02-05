@@ -49,7 +49,6 @@
                     <Grid ColumnDefinitions="*, Auto" HorizontalAlignment="Left">
                         <ColorPicker Grid.Column="0" Color="{Binding AccentHex, Mode=TwoWay}" />
                         <Button Grid.Column="1" Content="{x:Static lang:Resources.ApplyAccent}"
-                                IsEnabled="{Binding !UseKdeColor}"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
                                 Margin="20,0"
@@ -59,15 +58,12 @@
                                 Foreground="{DynamicResource SystemBaseHighColor}" />
                     </Grid>
                     <ToggleSwitch Content="Toggle Dark/Light Mode"
-                                  IsEnabled="{Binding !UseKdeColor}"
                                   IsChecked="{Binding IsDarkMode, Mode=TwoWay}" />
                     <TextBlock Text="Default Page on startup" FontSize="14"  />
                     <ComboBox
                         ItemsSource="{Binding DefaultViews}"
                         SelectedItem="{Binding DefaultScreenEnum}"
                         Width="200" />
-                    <ToggleSwitch Content="Sync to KDE Theme"
-                                  IsChecked="{Binding UseKdeColor, Mode=TwoWay}" />
                 </StackPanel>
             </TabItem>
         </TabControl>
@@ -110,6 +106,34 @@
                         <Button Grid.Column="1" Content="{x:Static lang:Resources.Install}"
                                 Background="{DynamicResource SystemAccentColor}" HorizontalAlignment="Stretch"
                                 Command="{Binding InstallFlatpakCommand}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+        <Border Background="#80000000"
+                IsVisible="{Binding ShowAurDialog}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border Background="{DynamicResource SystemChromeLowColor}"
+                    BorderBrush="{DynamicResource SystemBaseLowColor}"
+                    CornerRadius="8"
+                    Padding="20"
+                    Width="300"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 10 30 0 #A0000000">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="AUR Warning" FontWeight="UltraBold" FontSize="18"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="AUR packages are user-submitted and not officially supported. Use at your own risk." TextWrapping="Wrap"
+                               HorizontalAlignment="Center" FontWeight="ExtraBold" TextAlignment="Center" />
+                    <Grid ColumnDefinitions="*,*">
+                        <Button Grid.Column="0" Content="{x:Static lang:Resources.Cancel}"
+                                HorizontalAlignment="Stretch" Margin="0,0,5,0"
+                                Command="{Binding CancelAurDialog}" />
+                        <Button Grid.Column="1" Content="{x:Static lang:Resources.Confirm}"
+                                Background="{DynamicResource SystemAccentColor}" HorizontalAlignment="Stretch"
+                                Command="{Binding ConfirmAurWarningCommand}" />
                     </Grid>
                 </StackPanel>
             </Border>

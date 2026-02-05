@@ -54,14 +54,16 @@ public class AurPackageManager(string? configPath = null)
     public event EventHandler<AlpmQuestionEventArgs>? Question;
     public event EventHandler<AlpmProgressEventArgs>? Progress;
 
-    public Task Initialize(bool root = false)
+    public async Task Initialize(bool root = false)
     {
         _alpm = configPath is null ? new AlpmManager() : new AlpmManager(configPath);
         _alpm.Initialize(root);
         _alpm.Question += (sender, args) => Question?.Invoke(this, args);
         _alpm.Progress += (sender, args) => Progress?.Invoke(this, args);
         _aurSearchManager = new AurSearchManager(_httpClient);
-        return Task.CompletedTask;
+        
+        // Import caches from other AUR helpers (paru, yay) for installed foreign packages
+        await ImportOtherAurHelperCaches();
     }
 
     public async Task<List<AurPackageDto>> GetInstalledPackages()
@@ -78,7 +80,9 @@ public class AurPackageManager(string? configPath = null)
         var suggestByBaseNameResponse = await _aurSearchManager.SuggestByPackageBaseNamesAsync(query);
         //this might fail if AUR is down.
         return searchResponse.Results.Concat(suggestResponse.Results)
-            .Concat(suggestByBaseNameResponse.Results).ToList();
+            .Concat(suggestByBaseNameResponse.Results)
+            .DistinctBy(x => x.Name)
+            .ToList();
     }
 
     public async Task<List<AurUpdateDto>> GetPackagesNeedingUpdate()
@@ -215,8 +219,7 @@ public class AurPackageManager(string? configPath = null)
             depsToConsider = depsToConsider.Concat(makeDepends).Distinct().ToList();
         }
 
-        var installedPackages = _alpm.GetInstalledPackages().ToDictionary(x => x.Name, x => x.Version);
-        var depsToInstall = depsToConsider.Where(x => !IsDependencySatisfied(x, installedPackages)).ToList();
+        var depsToInstall = depsToConsider.Where(x => !_alpm.IsDependencySatisfiedByInstalled(x)).ToList();
 
         if (depsToInstall.Count == 0)
         {
@@ -240,23 +243,24 @@ public class AurPackageManager(string? configPath = null)
             Message = $"Installing dependencies: {string.Join(", ", depsToInstall)}"
         });
 
-        foreach (var dep in depsToInstall)
+        try
         {
-            try
-            {
-                _alpm.InstallPackages(depsToInstall);
-                break; // If successful, all deps are installed
-            }
-            catch (Exception)
+            _alpm.InstallPackages(depsToInstall);
+        }
+        catch (Exception)
+        {
+            // Fall back to installing one by one
+            foreach (var dep in depsToInstall)
             {
                 try
                 {
                     var pkgName = _alpm.GetPackageNameFromProvides(dep);
-                    _alpm.InstallPackage(pkgName);
+                    if (!string.IsNullOrEmpty(pkgName))
+                        _alpm.InstallPackage(pkgName);
                 }
                 catch (Exception ex2)
                 {
-                    Console.Error.WriteLine("Failed to install dependency: " + ex2.Message);
+                    Console.Error.WriteLine($"[Shelly] Failed to install dependency {dep}: {ex2.Message}");
                 }
             }
         }
@@ -317,9 +321,8 @@ public class AurPackageManager(string? configPath = null)
             var depends = pkgbuildInfo.Depends.Select(x => x.Trim()).ToList();
             var makeDepends = pkgbuildInfo.MakeDepends.Select(x => x.Trim()).ToList();
             var allDeps = depends.Concat(makeDepends).Distinct().ToList();
-            var installedPackages = _alpm.GetInstalledPackages().ToDictionary(x => x.Name, x => x.Version);
-            var depsToInstall = allDeps.Where(x => !IsDependencySatisfied(x, installedPackages)).ToList();
-            foreach (var dep in depsToInstall)
+            var depsToInstall = allDeps.Where(x => !_alpm.IsDependencySatisfiedByInstalled(x)).ToList();
+            if (depsToInstall.Count > 0)
             {
                 try
                 {
@@ -327,14 +330,19 @@ public class AurPackageManager(string? configPath = null)
                 }
                 catch (Exception)
                 {
-                    try
+                    // Fall back to installing one by one
+                    foreach (var dep in depsToInstall)
                     {
-                        var pkgName = _alpm.GetPackageNameFromProvides(dep);
-                        _alpm.InstallPackage(pkgName);
-                    }
-                    catch (Exception ex2)
-                    {
-                        Console.Error.WriteLine("Failed to install dependency: " + ex2.Message + "");
+                        try
+                        {
+                            var pkgName = _alpm.GetPackageNameFromProvides(dep);
+                            if (!string.IsNullOrEmpty(pkgName))
+                                _alpm.InstallPackage(pkgName);
+                        }
+                        catch (Exception ex2)
+                        {
+                            Console.Error.WriteLine($"[Shelly] Failed to install dependency {dep}: {ex2.Message}");
+                        }
                     }
                 }
             }
@@ -371,7 +379,21 @@ public class AurPackageManager(string? configPath = null)
                     CreateNoWindow = true,
                 }
             };
+            buildProcess.OutputDataReceived += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    Console.Error.WriteLine($"[Shelly] makepkg: {e.Data}");
+            };
+
+            buildProcess.ErrorDataReceived += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    Console.Error.WriteLine($"[Shelly] makepkg error: {e.Data}");
+            };
+
             buildProcess.Start();
+            buildProcess.BeginOutputReadLine();
+            buildProcess.BeginErrorReadLine();
             await buildProcess.WaitForExitAsync();
 
             if (buildProcess.ExitCode != 0)
@@ -520,14 +542,13 @@ public class AurPackageManager(string? configPath = null)
         var depends = pkgbuildInfo.Depends.Select(x => x.Trim()).ToList();
         var makeDepends = pkgbuildInfo.MakeDepends.Select(x => x.Trim()).ToList();
         var allDeps = depends.Concat(makeDepends).Distinct().ToList();
-        var installedPackages = _alpm.GetInstalledPackages().ToDictionary(x => x.Name, x => x.Version);
-        var depsToInstall = allDeps.Where(x => !IsDependencySatisfied(x, installedPackages)).ToList();
+        var depsToInstall = allDeps.Where(x => !_alpm.IsDependencySatisfiedByInstalled(x)).ToList();
 
         foreach (var dep in depsToInstall)
         {
             try
             {
-                _alpm.InstallPackages(depsToInstall);
+                _alpm.InstallPackage(dep);
             }
             catch (Exception)
             {
@@ -556,8 +577,22 @@ public class AurPackageManager(string? configPath = null)
                 CreateNoWindow = true,
             }
         };
+        buildProcess.OutputDataReceived += (sender, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+                Console.Error.WriteLine($"[Shelly] makepkg: {e.Data}");
+        };
+
+        buildProcess.ErrorDataReceived += (sender, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+                Console.Error.WriteLine($"[Shelly] makepkg error: {e.Data}");
+        };
         buildProcess.Start();
+        buildProcess.BeginOutputReadLine();
+        buildProcess.BeginErrorReadLine();
         await buildProcess.WaitForExitAsync();
+
 
         if (buildProcess.ExitCode != 0)
         {
@@ -785,5 +820,130 @@ public class AurPackageManager(string? configPath = null)
             "=" => cmp == 0,
             _ => true
         };
+    }
+
+    /// <summary>
+    /// Imports cached AUR package data from other AUR helpers (paru and yay) into Shelly's cache.
+    /// This allows Shelly to show PKGBUILD diffs for packages that were originally installed via paru or yay.
+    /// </summary>
+    private async Task ImportOtherAurHelperCaches()
+    {
+        try
+        {
+            var user = Environment.GetEnvironmentVariable("SUDO_USER") ?? Environment.UserName;
+            var home = $"/home/{user}";
+            var shellyCachePath = System.IO.Path.Combine(home, ".cache", "Shelly");
+            
+            // Get list of installed foreign (AUR) packages
+            var foreignPackages = _alpm.GetForeignPackages().Select(p => p.Name).ToHashSet();
+            
+            // Define cache locations for other AUR helpers
+            var paruCachePath = System.IO.Path.Combine(home, ".cache", "paru", "clone");
+            var yayCachePath = System.IO.Path.Combine(home, ".cache", "yay");
+            
+            // Import from paru cache
+            if (System.IO.Directory.Exists(paruCachePath))
+            {
+                await ImportFromAurHelperCache(paruCachePath, shellyCachePath, foreignPackages, user);
+            }
+            
+            // Import from yay cache
+            if (System.IO.Directory.Exists(yayCachePath))
+            {
+                await ImportFromAurHelperCache(yayCachePath, shellyCachePath, foreignPackages, user);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail initialization if cache import fails
+            Console.Error.WriteLine($"Warning: Failed to import AUR helper caches: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Imports package caches from a specific AUR helper's cache directory.
+    /// </summary>
+    private async Task ImportFromAurHelperCache(string sourceCachePath, string shellyCachePath, HashSet<string> foreignPackages, string user)
+    {
+        try
+        {
+            var packageDirs = System.IO.Directory.GetDirectories(sourceCachePath);
+            
+            foreach (var packageDir in packageDirs)
+            {
+                var packageName = System.IO.Path.GetFileName(packageDir);
+                
+                // Only import if the package is currently installed as a foreign package
+                if (!foreignPackages.Contains(packageName))
+                    continue;
+                
+                var shellyPackagePath = System.IO.Path.Combine(shellyCachePath, packageName);
+                
+                // Skip if Shelly already has a cache for this package
+                if (System.IO.Directory.Exists(shellyPackagePath))
+                    continue;
+                
+                // Check if source has a PKGBUILD
+                var sourcePkgbuild = System.IO.Path.Combine(packageDir, "PKGBUILD");
+                if (!System.IO.File.Exists(sourcePkgbuild))
+                    continue;
+                
+                // Create Shelly cache directory for this package
+                var mkdirProcess = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "sudo",
+                        Arguments = $"-u {user} mkdir -p {shellyPackagePath}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                mkdirProcess.Start();
+                await mkdirProcess.WaitForExitAsync();
+                
+                // Copy the PKGBUILD and other relevant files
+                var copyProcess = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "sudo",
+                        Arguments = $"-u {user} cp -r {packageDir}/. {shellyPackagePath}/",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                copyProcess.Start();
+                await copyProcess.WaitForExitAsync();
+                
+                // Remove any .git directory to save space (we don't need git history)
+                var gitDir = System.IO.Path.Combine(shellyPackagePath, ".git");
+                if (System.IO.Directory.Exists(gitDir))
+                {
+                    var rmGitProcess = new System.Diagnostics.Process
+                    {
+                        StartInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "sudo",
+                            Arguments = $"-u {user} rm -rf {gitDir}",
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        }
+                    };
+                    rmGitProcess.Start();
+                    await rmGitProcess.WaitForExitAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Warning: Failed to import from {sourceCachePath}: {ex.Message}");
+        }
     }
 }
