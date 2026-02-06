@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -48,8 +49,10 @@ public partial class App : Application
             var themeService = _services.GetRequiredService<ThemeService>();
             var cacheService = _services.GetRequiredService<IAppCache>();
             var config = configService.LoadConfig();
-            if (config.UseKdeTheme)
+            var sessionDesktop = Environment.GetEnvironmentVariable("XDG_SESSION_DESKTOP");
+            if (config.UseKdeTheme && sessionDesktop == "KDE")
             {
+                
                 themeService.ApplyKdeTheme();
             }
             else
