@@ -46,6 +46,7 @@
                         <Button Command="{Binding TogglePane}"
                                 HorizontalAlignment="Left"
                                 Background="Transparent"
+                                Foreground="{DynamicResource SystemBaseHighColor}" 
                                 Width="66" Height="48"
                                 Padding="0">
                             <icons:MaterialIcon Kind="Menu" Width="24" Height="24" HorizontalAlignment="Center" />
@@ -57,9 +58,9 @@
                                 Padding="0">
                             <Grid ColumnDefinitions="66, *" Height="40" Background="Transparent">
                                 <icons:MaterialIcon Kind="Home" Width="24" Height="24" HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 <TextBlock Grid.Column="1" Text="Home" VerticalAlignment="Center"
-                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" />
+                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" Foreground="{DynamicResource SystemBaseHighColor}" />
                             </Grid>
                         </Button>
                         <Button Command="{Binding TogglePackageMenu}"
@@ -70,10 +71,10 @@
                             <Grid ColumnDefinitions="66, *" Height="40">
                                 <icons:MaterialIcon Kind="PackageVariant" Width="22" Height="22"
                                                     HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 <TextBlock Grid.Column="1" Text="Packages"
                                            VerticalAlignment="Center"
-                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" />
+                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" Foreground="{DynamicResource SystemBaseHighColor}" />
                             </Grid>
                         </Button>
                         <StackPanel Margin="25,0,0,10" Spacing="5"
@@ -90,8 +91,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.InstallPackage}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="PlusBox" Width="18" Height="18" />
-                                    <TextBlock Text="Install Packages" FontSize="13" />
+                                    <icons:MaterialIcon Kind="PlusBox" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Install Packages" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                             <ToggleButton Command="{Binding GoUpdate}"
@@ -100,8 +101,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.UpdatePackage}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="Update" Width="18" Height="18" />
-                                    <TextBlock Text="Update Packages" FontSize="13" />
+                                    <icons:MaterialIcon Kind="Update" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Update Packages" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                             <ToggleButton Command="{Binding GoRemove}"
@@ -110,8 +111,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.RemovePackage}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="Delete" Width="18" Height="18" />
-                                    <TextBlock Text="Remove Packages" FontSize="13" />
+                                    <icons:MaterialIcon Kind="Delete" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Remove Packages" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                         </StackPanel>
@@ -124,10 +125,10 @@
                             <Grid ColumnDefinitions="66, *" Height="40">
                                 <icons:MaterialIcon Kind="Arch" Width="22" Height="22"
                                                     HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center" />
+                                                    VerticalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 <TextBlock Grid.Column="1" Text="AUR"
                                            VerticalAlignment="Center"
-                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" />
+                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" Foreground="{DynamicResource SystemBaseHighColor}" />
                             </Grid>
                         </Button>
                         <StackPanel Margin="25,0,0,10" Spacing="5"
@@ -144,8 +145,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.InstallAurPackage}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="PlusBox" Width="18" Height="18" />
-                                    <TextBlock Text="Install AUR" FontSize="13" />
+                                    <icons:MaterialIcon Kind="PlusBox" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Install AUR" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                             <ToggleButton Command="{Binding GoAurUpdate}"
@@ -154,8 +155,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.UpdateAurPackage}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="Update" Width="18" Height="18" />
-                                    <TextBlock Text="Update AUR" FontSize="13" />
+                                    <icons:MaterialIcon Kind="Update" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Update AUR" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                             <ToggleButton Command="{Binding GoAurRemove}"
@@ -164,8 +165,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.RemoveAurPackage}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="Delete" Width="18" Height="18" />
-                                    <TextBlock Text="Remove AUR" FontSize="13" />
+                                    <icons:MaterialIcon Kind="Delete" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Remove AUR" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                         </StackPanel>
@@ -177,12 +178,12 @@
                                 IsVisible="{Binding IsFlatpakEnabled}">
                             <Grid ColumnDefinitions="66, *" Height="40">
                                 <PathIcon Data="{StaticResource FlatpakIcon}"
-                                          Foreground="{DynamicResource TextControlForeground}"
+                                          Foreground="{DynamicResource SystemBaseHighColor}"
                                           Width="18" 
                                           Height="18" />
                                 <TextBlock Grid.Column="1" Text="Flatpak"
                                            VerticalAlignment="Center"
-                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" />
+                                           IsVisible="{Binding $parent[SplitView].IsPaneOpen}" Foreground="{DynamicResource SystemBaseHighColor}" />
                             </Grid>
                         </Button>
                         <StackPanel Margin="25,0,0,10" Spacing="5"
@@ -199,8 +200,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.InstallFlatpak}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="PlusBox" Width="18" Height="18" />
-                                    <TextBlock Text="Install Flatpak" FontSize="13" />
+                                    <icons:MaterialIcon Kind="PlusBox" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Install Flatpak" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                             <ToggleButton Command="{Binding GoFlatpakUpdate}"
@@ -209,8 +210,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.UpdateFlatpak}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="Update" Width="18" Height="18" />
-                                    <TextBlock Text="Update Flatpak" FontSize="13" />
+                                    <icons:MaterialIcon Kind="Update" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Update Flatpak" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                             <ToggleButton Command="{Binding GoFlatpakRemove}"
@@ -219,8 +220,8 @@
         Converter={StaticResource EnumEqualsConverter},
         ConverterParameter={x:Static enums:MenuOptions.RemoveFlatpak}}">
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <icons:MaterialIcon Kind="Delete" Width="18" Height="18" />
-                                    <TextBlock Text="Remove Flatpak" FontSize="13" />
+                                    <icons:MaterialIcon Kind="Delete" Width="18" Height="18" Foreground="{DynamicResource SystemBaseHighColor}" />
+                                    <TextBlock Text="Remove Flatpak" FontSize="13" Foreground="{DynamicResource SystemBaseHighColor}" />
                                 </StackPanel>
                             </ToggleButton>
                         </StackPanel>
@@ -233,9 +234,9 @@
                             Padding="0">
                         <Grid ColumnDefinitions="66, *" Height="48" Background="Transparent">
                             <icons:MaterialIcon Kind="Settings" Width="24" Height="24" HorizontalAlignment="Center"
-                                                VerticalAlignment="Center" />
+                                                VerticalAlignment="Center" Foreground="{DynamicResource SystemBaseHighColor}" />
                             <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center"
-                                       IsVisible="{Binding $parent[SplitView].IsPaneOpen}" />
+                                       IsVisible="{Binding $parent[SplitView].IsPaneOpen}" Foreground="{DynamicResource SystemBaseHighColor}" />
                         </Grid>
                     </Button>
 
@@ -380,7 +381,7 @@
             </Border>
         </Panel>
         <Panel IsVisible="{Binding ShowPasswordPrompt}" Background="#80000000">
-            <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+            <Border Background="{DynamicResource SystemChromeLowColor}"
                     CornerRadius="12"
                     Padding="30"
                     HorizontalAlignment="Center"
@@ -462,6 +463,7 @@
                 IsVisible="{Binding ShowActionToast}"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Bottom"
+                Background="{DynamicResource SystemAccentColor}"
                 Margin="20"
                 Padding="16,12"
                 CornerRadius="8"
