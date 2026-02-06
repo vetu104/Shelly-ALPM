@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reflection;
@@ -46,6 +47,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         _enableConsole = config.ConsoleEnabled;
         _enableAur = config.AurEnabled;
         _enableFlatpak = config.FlatPackEnabled;
+        _useKdeColor = config.UseKdeTheme;
 
         _ = SetUpdateText();
         _ = CheckAndEnableFlatpakAsync();
@@ -94,7 +96,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         set
         {
             this.RaiseAndSetIfChanged(ref _isDarkMode, value);
-            new ThemeService().SetTheme(value);
+            ThemeService.SetTheme(value);
 
             var config = _configService.LoadConfig();
             config.DarkMode = value;
@@ -181,6 +183,55 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
         set => this.RaiseAndSetIfChanged(ref _showFlatpakDialog, value);
     }
 
+    private bool _useKdeColor;
+
+    public bool UseKdeColor
+    {
+        get => _useKdeColor;
+        set
+        {
+            var sessionDesktop = Environment.GetEnvironmentVariable("XDG_SESSION_DESKTOP");
+            if (sessionDesktop != "KDE") return;
+
+            if (!value)
+            {
+                var fluentTheme = Application.Current?.Styles.OfType<FluentTheme>().FirstOrDefault();
+                if (fluentTheme.Palettes.TryGetValue(ThemeVariant.Dark, out var currentDark) &&
+                    currentDark is { } darkPalette)
+                {
+                    var themeService = new ThemeService();
+                    themeService.ApplyAltHighColor(Color.FromRgb(255, 255, 255));
+                    themeService.ApplyCustomAccent(AccentHex);
+                    themeService.ApplyLowChromeColor(Color.FromRgb(23, 23, 23));
+                    themeService.ApplySecondaryBackground(Color.FromRgb(31, 31, 31));
+                }
+                else
+                {
+                    var themeService = new ThemeService();
+                    themeService.ApplyAltHighColor(Color.FromRgb(0, 0, 0));
+                    themeService.ApplyCustomAccent(AccentHex);
+                    themeService.ApplyLowChromeColor(Color.FromRgb(242, 242, 242));
+                    themeService.ApplySecondaryBackground(Color.FromRgb(230, 230, 230));
+                }
+                var config = _configService.LoadConfig();
+                config.UseKdeTheme = value;
+                _configService.SaveConfig(config);
+            }
+            else
+            {
+
+                new ThemeService().ApplyKdeTheme();
+                var config = _configService.LoadConfig();
+                config.UseKdeTheme = value;
+                _configService.SaveConfig(config);
+            }
+
+            this.RaiseAndSetIfChanged(ref _useKdeColor, value);
+
+        }
+    }
+ 
+
 
     public bool EnableFlatpak
     {
@@ -193,7 +244,7 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             if (value && !IsFlatbackToggleEnabled)
             {
                 ShowFlatpakDialog = true;
-                
+
                 Task.Run(async () =>
                 {
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
@@ -211,7 +262,6 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             var config = _configService.LoadConfig();
             config.FlatPackEnabled = value;
             _configService.SaveConfig(config);
-         
         }
     }
 
@@ -257,7 +307,8 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             var credManager = App.Services.GetService<ICredentialManager>();
             if (!credManager!.IsValidated)
             {
-                if (!await credManager.RequestCredentialsAsync("Install flatpak") || string.IsNullOrEmpty(credManager.GetPassword()))
+                if (!await credManager.RequestCredentialsAsync("Install flatpak") ||
+                    string.IsNullOrEmpty(credManager.GetPassword()))
                 {
                     ShowFlatpakDialog = false;
                     return false;
@@ -287,9 +338,9 @@ public class SettingViewModel : ViewModelBase, IRoutableViewModel
             ShowFlatpakDialog = false;
 
             if (!result.Success) return result.Success;
-            
+
             await CheckAndEnableFlatpakAsync();
-            
+
             await SetEnableFlatpakAsync(true);
 
             IsFlatbackToggleEnabled = true;

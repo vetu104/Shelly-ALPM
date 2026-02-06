@@ -26,4 +26,7 @@ public class ShellyConfig
     public WindowState WindowState { get; set; } = WindowState.Normal;
     
     public DefaultViewEnum DefaultView  { get; set; }
+    
+    public bool UseKdeTheme { get; set; } = false;
+    
 }
